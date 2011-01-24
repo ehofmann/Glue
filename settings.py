@@ -9,6 +9,8 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
+project_dir = "E:\data\projects\Glue"
+
 DATABASES = {
     'default': {
         'ENGINE': 'sqlite3', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
@@ -19,6 +21,7 @@ DATABASES = {
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
 }
+
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name

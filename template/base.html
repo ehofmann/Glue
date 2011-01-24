@@ -2,11 +2,33 @@
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-    <link rel="stylesheet" href="base.css" />
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" type="text/css" href="/css/dashboard.css" /> 
     <title>{% block title %}Glue{% endblock %}</title>
 </head>
 
-<body>
+<body class="dashboard">
+	<div id="container"> 
+		<div id="header"> 
+	        <div id="branding"> 
+	        
+				<h1 id="site-name">Glue</h1> 
+	 
+		    </div> 
+	        
+	        <div id="user-tools"> 
+	            Welcome,
+	            <strong>{{user.name}}</strong>.
+	            <a href="/accounts/profile/">     
+	                Profile</a> /
+	                
+	                
+	            <a href="/accounts/logout/?next="/\""> 
+	                Log out</a> 
+	            
+	        </div> 
+	    </div> 
+	
     <div id="sidebar">
         {% block sidebar %}
         <ul>
@@ -19,5 +41,8 @@
     <div id="content">
         {% block content %}{% endblock %}
     </div>
+
+</div>
+<!-- END Content --> 
 </body>
 </html>
