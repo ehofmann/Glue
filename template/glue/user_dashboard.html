@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Dashboard</h1>
+
+<h2>Todo</h2>
+
+{% if todo_tasks %}
+    <ul>
+    {% for task in todo_tasks %}
+        <li><a href="/glue/task/{{ task.id }}/">{{ task }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No tasks to do.</p>
+{% endif %}
+
+<h2>Done</h2>
+{% if done_tasks %}
+    <ul>
+    {% for task in done_tasks %}
+  		<li><a href="/glue/task/{{ task.id }}/">{{ task }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No tasks done yet.</p>
+{% endif %}
+
+{% endblock %}

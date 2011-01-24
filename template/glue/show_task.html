@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Task</h1>
+{{task.description}}
+
+<h2>Project</h2>
+{{task.component.project}}
+
+<h2>Component</h2>
+{{task.component}}
+
+<h2>Data</h2>
+<table border="1">
+	<tr>
+		<td>Brain requirement</td>
+		<td>{{task.brain_requirement}}</td>
+	</tr>
+	<tr>
+		<td>CR</td>
+		<td>{{task.cr_number}}</td>
+	</tr>
+</table>
+
+{% endblock %}
