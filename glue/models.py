@@ -29,7 +29,7 @@ class Task(models.Model):
     user = models.ForeignKey(User)
     component = models.ForeignKey(Component)
     def __unicode__(self):
-        return "%s, %s, %s (%s)" % (self.brain_requirement, self.cr_number, self.description, self.user)
+        return "Requirement: %s, CR %s, Description: %s (%s)" % (self.brain_requirement, self.cr_number, self.description, self.user)
 
 #class Action(models.Model):
     #name = models.CharField(max_length=20)
