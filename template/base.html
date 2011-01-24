@@ -2,8 +2,8 @@
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-    <link rel="stylesheet" href="/css/base.css" />
-    <link rel="stylesheet" type="text/css" href="/css/dashboard.css" /> 
+    <link rel="stylesheet" href="/static/css/base.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/dashboard.css" /> 
     <title>{% block title %}Glue{% endblock %}</title>
 </head>
 
@@ -11,14 +11,12 @@
 	<div id="container"> 
 		<div id="header"> 
 	        <div id="branding"> 
-	        
 				<h1 id="site-name">Glue</h1> 
-	 
 		    </div> 
 	        
 	        <div id="user-tools"> 
 	            Welcome,
-	            <strong>{{user.name}}</strong>.
+	            <strong>{{user.username}}</strong>.
 	            <a href="/accounts/profile/">     
 	                Profile</a> /
 	                
@@ -31,10 +29,15 @@
 	
     <div id="sidebar">
         {% block sidebar %}
-        <ul>
-            <li><a href="/">Dashboard</a></li>
-            <li><a href="/accounts/logout/?next="/\"">Logout</a></li>
-        </ul>
+        <div id="navcontainer">
+	        <ul id="menu" style="position: relative; ">
+	            <li><a href="/glue/">Dashboard</a></li>
+	            <li style="display:inline;list-style-type:circle"><a href="/accounts/logout/?next="/\"">Logout</a></li>
+	            <li style="display:inline;list-style-type:circle"><a href="/glue/create_task/">Create task</a></li>
+	            <li><a href="/glue/create_component/">Create component</a></li>
+	            <li><a href="/glue/create_project/">Create project</a></li>
+			</ul>
+		</div>
         {% endblock %}
     </div>
 

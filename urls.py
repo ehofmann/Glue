@@ -1,7 +1,6 @@
 from django.conf.urls.defaults import *
-from glue.settings import project_dir
 from django.contrib.auth import views
-
+import settings
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
@@ -22,5 +21,5 @@ urlpatterns = patterns('',
     (r'^accounts/$', 'django.contrib.auth.views.login'),
     (r'^accounts/logout/$', 'django.contrib.auth.views.logout'),
     (r'^static/(?P<path>.*)$', 'django.views.static.serve',
-        {'document_root': "%s/static" % project_dir}),
+        {'document_root': "%s/static" % settings.project_dir}),
 )

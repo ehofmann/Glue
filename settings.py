@@ -22,6 +22,7 @@ DATABASES = {
     }
 }
 
+TEMPLATE_CONTEXT_PROCESSORS = ("django.core.context_processors.auth", "django.core.context_processors.debug", "django.core.context_processors.i18n", "django.core.context_processors.media", 'django.core.context_processors.request',)
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name

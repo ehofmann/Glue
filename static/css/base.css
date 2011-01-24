@@ -757,3 +757,12 @@ table#change-history tbody th {
     color: #666;
 }
 
+#navcontainer ul { list-style-type: none; margin: 0;
+padding: 0;}
+
+#navcontainer ul li { display: inline; }
+
+#navcontainer ul li a { 
+	text-decoration: none;
+	padding: .2em 1em;
+}
