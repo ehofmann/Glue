@@ -49,13 +49,15 @@ def show_task_actions(request, task_id):
     task_actions = TaskAction.objects.select_related().filter(task=t)
     return render('glue/show_task_actions.html', {'task_actions': task_actions}, request)
 
+
 @login_required
 def show_task_action_table(request, task_id):
     t = get_object_or_404(Task, pk=task_id)
-    TaskActionFormSet = modelformset_factory(TaskAction)
-    formset = TaskActionFormSet(queryset=TaskAction.objects.select_related().filter(task=t))
-    
-    return render('glue/show_task_action_table.html', {'formset': formset}, request)
+    task_actions = TaskAction.objects.select_related().filter(task=t)
+    #TaskActionFormSet = inlineformset_factory(TaskAction, Task, extra=0)
+    #formset = TaskActionFormSet(queryset=TaskAction.objects.select_related().filter(task=t))
+
+    return render('glue/show_task_action_table.html', {'task_actions': task_actions}, request)
 
 
 @login_required
@@ -91,3 +93,4 @@ def create_project(request):
         form = ProjectForm() # An unbound form
 
     return render('glue/create_project.html', {'form': form}, request)
+

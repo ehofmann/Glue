@@ -1,10 +1,45 @@
 {% extends "base.html" %}
 
+{% block scripts %}
+<script type="text/javascript">
+<!--
+	
+}
+//-->
+</script>
+{% endblock %}
+
 {% block content %}
 <h1>Task actions</h1>
 
+
 <form method="post" action="">
-    {{ formset }}
+	<table>
+		<thead>
+			<tr>
+				<th> Action </th>
+				<th> Description </th>
+				<th> Enabled? </th>
+				<th> Finished? </th>
+			
+		</thead>
+		
+    {% for task_action in task_actions %}
+		<tr>
+			<td>{{task_action.action.name}}</td>
+			<td>{{task_action.action.description}}</td>
+			<td><input type="checkbox" 
+			{% if task_action.enabled %}
+			checked="checked"
+			{% endif %} id="enabled" onClick="toggleEnabled({{task_action.id}})"/> </td>
+
+			<td><input type="checkbox" 
+			{% if task_action.finished%}
+			checked="checked"
+			{% endif %} id="enabled"/> </td>
+		</tr>
+    {% endfor %}
+    </table>
 </form>
 
 {% endblock %}
