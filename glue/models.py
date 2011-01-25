@@ -31,8 +31,23 @@ class Task(models.Model):
     def __unicode__(self):
         return "Requirement: %s, CR %s, Description: %s (%s)" % (self.brain_requirement, self.cr_number, self.description, self.user)
 
-#class Action(models.Model):
-    #name = models.CharField(max_length=20)
-    #description = models.CharField(50)
-    #last_execution = models.DateTimeField()
+class Action(models.Model):
+    classname = models.CharField(max_length=50)
+    name = models.CharField(max_length=20)
+    description = models.CharField(max_length=50)
+    def __unicode__(self):           
+        return "Action: %s - %s (%s)" % (self.name, self.description, self.classname)
+    
+class TaskAction(models.Model):
+    action = models.ForeignKey(Action)
+    task = models.ForeignKey(Task)
+    last_execution = models.DateTimeField(null=True)
+    finished = models.BooleanField()
+    enabled = models.BooleanField()
+    visible = models.BooleanField()
+
+    def __unicode__(self):           
+        return "%s | Task: %s" % (self.action, self.task)
+        
+
     

@@ -5,6 +5,7 @@ from django.shortcuts import get_list_or_404, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout,authenticate, login
 from django.forms import ModelForm
+from django.forms.models import modelformset_factory
 
 from glue.models import *
 
@@ -40,6 +41,21 @@ def user_dashboard(request):
 def task(request, task_id):
     task = get_object_or_404(Task, pk=task_id)
     return render('glue/show_task.html', {'task': task}, request)
+
+
+@login_required
+def show_task_actions(request, task_id):
+    t = get_object_or_404(Task, pk=task_id)
+    task_actions = TaskAction.objects.select_related().filter(task=t)
+    return render('glue/show_task_actions.html', {'task_actions': task_actions}, request)
+
+@login_required
+def show_task_action_table(request, task_id):
+    t = get_object_or_404(Task, pk=task_id)
+    TaskActionFormSet = modelformset_factory(TaskAction)
+    formset = TaskActionFormSet(queryset=TaskAction.objects.select_related().filter(task=t))
+    
+    return render('glue/show_task_action_table.html', {'formset': formset}, request)
 
 
 @login_required
