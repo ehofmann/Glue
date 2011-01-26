@@ -2,7 +2,27 @@
 
 {% block content %}
 <h1>Task</h1>
-Description: {{task.description}}, Project: {{task.component.project}}, Component:{{task.component}},
-Brain: {{task.brain_requirement}}, CR {{task.cr_number}}
+<table>
+	<thead>
+		<tr>
+			<th>Description</th>
+			<th>Project</th>
+			<th>Component</th>
+			<th>Brain Requirement</th>
+			<th>CR</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>{{task.description}}</td>
+			<td>{{task.component.project}}</td>
+			<td>{{task.component}}</td>
+			<td>{{task.brain_requirement}}</td>
+			<td>{{task.cr_number}}</td>
+		</tr>
+	</tbody>
+</table>
+
+<a href="/glue/show_actions_before/{{task.id}}/">Execute actions before development</a>
 {% endblock %}
 

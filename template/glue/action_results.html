@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<h1>Action Results</h1>
+
+
+<table>
+	<thead>
+		<tr>
+			<th> Action </th>
+			<th> Description </th>
+			<th> Result Message</th>
+		</tr>	
+	</thead>
+	
+   {% for task_action in task_actions %}
+	<tr>
+		<td>{{task_action.action.name}}</td>
+		<td>{{task_action.action.description}}</td>
+		<td>{{action_results.task_action.id}}</td>
+
+	</tr>
+  {% endfor %}
+</table>
+<a href={{next_step}}>next</a>
+{% endblock %}

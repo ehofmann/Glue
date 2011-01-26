@@ -9,6 +9,6 @@ urlpatterns = patterns('glue.views',
     (r'^create_task/$', 'create_task'),
     (r'^create_component/$', 'create_component'),
     (r'^create_project/$', 'create_project'),
-    #(r'^logout/$', 'logout_user'),
-    #(r'^login/next=(?P<next_url>.+)$', 'login'),
+    (r'^show_actions_before/(?P<task_id>\d+)/$', 'show_actions_before'),
+    (r'^do_actions/(?P<task_id>\d+)/(?P<when>[a-z]+)/$', 'do_actions'),
 )

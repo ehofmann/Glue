@@ -8,7 +8,7 @@ from django.forms import ModelForm
 from django.forms.models import modelformset_factory
 
 from glue.models import *
-
+from glue.action import ActionManager
 
 # Create the form class.
 class TaskForm(ModelForm):
@@ -119,4 +119,18 @@ def create_project(request):
         form = ProjectForm() # An unbound form
 
     return render('glue/create_project.html', {'form': form}, request)
+
+@login_required
+def do_actions(request, task_id, when):
+    is_before = when == 'before'
+    t = get_object_or_404(Task, pk=task_id)
+    task_actions = TaskAction.objects.select_related().filter(task=t, 
+	before_development=is_before,
+	enabled=True,
+	visible=True)
+
+    manager = ActionManager(task_actions)
+    action_results = manager.execute()
+
+    return render('glue/action_results.html', {'action_results': action_results}, request)
 
