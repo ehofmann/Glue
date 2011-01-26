@@ -5,33 +5,32 @@
 <h1>Task actions</h1>
 
 
-<form method="post" action="">
-	<table>
-		<thead>
-			<tr>
-				<th> Action </th>
-				<th> Description </th>
-				<th> Enabled? </th>
-				<th> Finished? </th>
-			
-		</thead>
-		
-    {% for task_action in task_actions %}
+<table>
+	<thead>
 		<tr>
-			<td>{{task_action.action.name}}</td>
-			<td>{{task_action.action.description}}</td>
-			<td><input type="checkbox" 
-			{% if task_action.enabled %}
-			checked="checked"
-			{% endif %} id="enabled" onClick="toggleEnabled({{task_action.id}})" DISABLED/> </td>
+			<th> Action </th>
+			<th> Description </th>
+			<th> Enabled? </th>
+			<th> Finished? </th>
+		
+	</thead>
+	
+   {% for task_action in task_actions %}
+	<tr>
+		<td>{{task_action.action.name}}</td>
+		<td>{{task_action.action.description}}</td>
+		<td><input type="checkbox" 
+		{% if task_action.enabled %}
+		checked="checked"
+		{% endif %} id="enabled" onClick="toggleEnabled({{task_action.id}})" DISABLED/> </td>
 
-			<td><input type="checkbox" 
-			{% if task_action.finished%}
-			checked="checked"
-			{% endif %} id="enabled" DISABLED/> </td>
-		</tr>
-    {% endfor %}
-    </table>
-</form>
-
+	<td><input type="checkbox" 
+	{% if task_action.finished%}
+	checked="checked"
+	{% endif %} id="enabled" DISABLED/> </td>
+	</tr>
+  {% endfor %}
+</table>
+{{next_step}}
+<a href={{next_step}}>next</a>
 {% endblock %}

@@ -53,11 +53,37 @@ def show_task_actions(request, task_id):
 @login_required
 def show_task_action_table(request, task_id):
     t = get_object_or_404(Task, pk=task_id)
-    task_actions = TaskAction.objects.select_related().filter(task=t)
+    task_actions = TaskAction.objects.select_related().filter(task=t, before_development=True)
     #TaskActionFormSet = inlineformset_factory(TaskAction, Task, extra=0)
     #formset = TaskActionFormSet(queryset=TaskAction.objects.select_related().filter(task=t))
 
     return render('glue/show_task_action_table.html', {'task_actions': task_actions}, request)
+
+
+@login_required
+def show_actions_before(request, task_id):
+    t = get_object_or_404(Task, pk=task_id)
+    task_actions = TaskAction.objects.select_related().filter(task=t, before_development=False)
+    #TaskActionFormSet = inlineformset_factory(TaskAction, Task, extra=0)
+    #formset = TaskActionFormSet(queryset=TaskAction.objects.select_related().filter(task=t))
+
+    return render('glue/show_task_action_table.html', 
+                  {'task_actions': task_actions, 
+                   'next_step': '/glue/do_actions/%s/before' % task_id},
+                    request)
+
+
+@login_required
+def show_actions_after(request, task_id):
+    t = get_object_or_404(Task, pk=task_id)
+    task_actions = TaskAction.objects.select_related().filter(task=t, before_development=false)
+    #TaskActionFormSet = inlineformset_factory(TaskAction, Task, extra=0)
+    #formset = TaskActionFormSet(queryset=TaskAction.objects.select_related().filter(task=t))
+
+    return render('glue/show_task_action_table.html', 
+                  {'task_actions': task_actions, 
+                   'next_step': '/glue/do_actions/%s/after' % task_id},
+                    request)
 
 
 @login_required

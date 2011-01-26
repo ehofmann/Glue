@@ -45,9 +45,11 @@ class TaskAction(models.Model):
     finished = models.BooleanField()
     enabled = models.BooleanField()
     visible = models.BooleanField()
-
+    before_development = models.BooleanField()
+    action_description = models.CharField(max_length=50, default="")
+    
     def __unicode__(self):           
-        return "%s | Task: %s" % (self.action, self.task)
+        return "%s | %s | Task: %s" % (self.action_description, self.action, self.task)
         
 
     

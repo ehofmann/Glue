@@ -9,7 +9,11 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-project_dir = "E:\data\projects\Glue"
+import os
+project_dir = os.path.dirname(__file__)
+print "Project dir: %s" % project_dir
+
+#project_dir = "E:\data\projects\Glue"
 
 DATABASES = {
     'default': {
@@ -54,7 +58,7 @@ MEDIA_ROOT = ''
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
-MEDIA_URL = 'E:/data/projects/Glue/'
+MEDIA_URL = project_dir #'E:/data/projects/Glue/'
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -82,7 +86,8 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'Glue.urls'
 
 TEMPLATE_DIRS = (
-                 "E:/data/projects/Glue/template"
+                 "%s/template" % project_dir
+                 #"E:/data/projects/Glue/template"
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -101,4 +106,5 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
     'glue',
+    'django_evolution',
 )
