@@ -1,13 +1,5 @@
 {% extends "base.html" %}
 
-{% block scripts %}
-<script type="text/javascript">
-<!--
-	
-}
-//-->
-</script>
-{% endblock %}
 
 {% block content %}
 <h1>Task actions</h1>
@@ -31,12 +23,12 @@
 			<td><input type="checkbox" 
 			{% if task_action.enabled %}
 			checked="checked"
-			{% endif %} id="enabled" onClick="toggleEnabled({{task_action.id}})"/> </td>
+			{% endif %} id="enabled" onClick="toggleEnabled({{task_action.id}})" DISABLED/> </td>
 
 			<td><input type="checkbox" 
 			{% if task_action.finished%}
 			checked="checked"
-			{% endif %} id="enabled"/> </td>
+			{% endif %} id="enabled" DISABLED/> </td>
 		</tr>
     {% endfor %}
     </table>
