@@ -1,6 +1,24 @@
 {% extends "base.html" %}
 
 
+{% block script %}
+
+<script type="text/javascript">
+	$(document).ready(function(){
+     		$("#action1").html("lala");
+	
+		$.get("/glue/do_action/2/", function(text) {
+		       // format and output result
+			alert(text);     
+		});
+
+
+	});
+</script>
+
+{% endblock %}
+
+
 {% block content %}
 <h1>Task actions</h1>
 
@@ -31,5 +49,10 @@
 	</tr>
   {% endfor %}
 </table>
+
+<div id="action1">
+action1 div
+</div>
+
 <a href={{next_step}}>next</a>
 {% endblock %}

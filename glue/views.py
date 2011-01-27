@@ -6,9 +6,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout,authenticate, login
 from django.forms import ModelForm
 from django.forms.models import modelformset_factory
+from django.http import HttpResponse
+
 
 from glue.models import *
 from glue.action import ActionManager
+
+import sys
 
 # Create the form class.
 class TaskForm(ModelForm):
@@ -133,4 +137,24 @@ def do_actions(request, task_id, when):
     action_results = manager.execute()
 
     return render('glue/action_results.html', {'action_results': action_results}, request)
+
+@login_required
+def do_action(request, action_id):
+    try:
+	    print "do_action"
+	    print "Searching action"
+	    task_action = get_object_or_404(TaskAction, pk=action_id)
+	    print "Creating manager"
+	    manager = ActionManager([task_action])
+	    print "Executing manager"
+	    action_results = manager.execute()
+	    print "Printing results"
+	    print str(action_results)
+	    #return HttpResponse("hallo")
+    except Exception as e:
+	print e
+	print "Unexpected error:", sys.exc_info()[0]
+    	return HttpResponse(str(e))
+    return render('glue/action_result.html', {}, request)
+
 

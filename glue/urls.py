@@ -11,4 +11,5 @@ urlpatterns = patterns('glue.views',
     (r'^create_project/$', 'create_project'),
     (r'^show_actions_before/(?P<task_id>\d+)/$', 'show_actions_before'),
     (r'^do_actions/(?P<task_id>\d+)/(?P<when>[a-z]+)/$', 'do_actions'),
+    (r'^do_action/(?P<action_id>\d+)/$', 'do_action'),
 )

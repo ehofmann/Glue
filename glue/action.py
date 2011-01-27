@@ -7,11 +7,11 @@ class Action():
     def __unicode__(self):
         return self.model.__unicode__()
 
-class ManualAction():
+class ManualAction(Action):
     def __init__(self, model):
         Action.__init__(self, model)
 
-    def execute():
+    def execute(self):
 	return ["Skipping manual action: %s" % self.model.action_description]
 
 
@@ -19,11 +19,12 @@ class ActionFactory():
         
     def createAction(self, model):        
         classname = model.action.classname
-        action = globals()[classname]
+	print "createAction for class %s" % classname
+        #action = globals()[classname]
+	action = ManualAction(model)
         return action
             
             
-
 class ActionManager():
 	def __init__(self, task_actions):
 		self.task_actions = task_actions
