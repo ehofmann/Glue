@@ -13,4 +13,5 @@ urlpatterns = patterns('glue.views',
     (r'^do_actions/(?P<task_id>\d+)/(?P<when>[a-z]+)/$', 'do_actions'),
     (r'^do_action/$', 'do_action'),
     (r'^update_task_action/$', 'update_task_action'),
+    (r'^get_task/$', 'get_task'),
 )

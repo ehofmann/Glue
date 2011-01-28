@@ -5,23 +5,56 @@
 
 <script type="text/javascript">
 	$(document).ready(function(){
-     		//$("#action2").html("lala");
-
-		$("#a_action2").click(function(event){
-			$.get("/glue/do_action/2/", function(text) {
-			       // format and output result
-				$("#action2").html(text);
-			});
-   		});
-
+		// for execute links prevent, that they actually connect
+		// to the href. We only want the onclick code to be executed.
+		{% for task_action in task_actions %}
+			$("#execute" + {{task_action.id}}).click(function(event){
+				event.preventDefault();		
+   			});
+			$("#finishedCheckbox" + {{task_action.id}}).click(function(event){
+				event.preventDefault();		
+   			});
+		{% endfor %}
+		$("#executeAll").click(function(event){
+			event.preventDefault();		
+		});
 		
+
+		// Need to update the tasks, to disable/enable the checkboxes and
+		// buttons.
+		{% for task_action in task_actions %}
+			updateTask({{task_action.id}});
+		{% endfor %}
 	});
+
+
+	function changeExecuteState(task_action_id, enabled)
+	{
+		executeName = "#execute" + task_action_id;
+		if(enabled)
+			$(executeName).removeAttr('disabled');
+		else
+			$(executeName).attr('disabled', 'disabled');
+			
+
+	};
+	
+	function changeFinishedState(task_action_id, enabled)
+	{
+		executeName = "#finishedCheckbox" + task_action_id;
+		if(enabled)
+			$(executeName).removeAttr('disabled');
+		else
+			$(executeName).attr('disabled', 'disabled');
+			
+
+	};
 
 	function updateTask(task_action_id)
 	{
-
 		enabledName = "#enabledCheckbox" + task_action_id;
 		finishedName = "#finishedCheckbox" + task_action_id;
+		executeName = "#execute" + task_action_id;
 		enabled = $(enabledName).attr("checked");
 		finished = $(finishedName).attr("checked");
 		$.get("/glue/update_task_action", {
@@ -33,9 +66,17 @@
 		       		// format and output result
 				eval("data=" + text);
 				success = data['success'];
-				if (!success)
+				if (success)
 				{
-					alert("Error: Change could not be saved");
+					$(finishedName).attr("checked", finished);
+					changeExecuteState(task_action_id, (!finished) && enabled);
+					changeFinishedState(task_action_id, enabled);
+					
+				}
+				else
+				{
+					alert("Error: Change could not be saved, refreshing");
+					// refresh
 				} 
 			}
 		);
@@ -55,7 +96,7 @@
 				{
 					finishedName = "#finishedCheckbox" + task_action_id;
 					$(finishedName).attr("checked", true);
-						
+					changeExecuteState(task_action_id, false);
 				}
 				else
 				{
@@ -105,18 +146,18 @@
 				id="finishedCheckbox{{task_action.id}}"
 			{% if task_action.finished%}
 			checked="checked"
-			{% endif %} id="finished"
+			{% endif %}
 			onclick="updateTask({{task_action.id}});"
 			/> </td>
 			<td>
-				<a onclick="execute({{task_action.id}});" id="execute{{task_action.id}}"> execute </a>
+				<button onclick="execute({{task_action.id}});" id="execute{{task_action.id}}"> execute </button>
 			</td>
 		</tr>
 	</div>
   {% endfor %}
 </table>
 
-<a>execute enabled unfinished actions</a>
+<a href="" id="executeAll">execute enabled unfinished actions</a>
 <br/>
 <a href={{next_step}}>next</a>
 

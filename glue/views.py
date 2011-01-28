@@ -8,6 +8,8 @@ from django.forms import ModelForm
 from django.forms.models import modelformset_factory
 from django.http import HttpResponse
 from django.utils import simplejson
+from django.core import serializers
+
 
 
 from glue.models import *
@@ -44,8 +46,9 @@ def user_dashboard(request):
 
 @login_required
 def task(request, task_id):
-    task = get_object_or_404(Task, pk=task_id)
-    return render('glue/show_task.html', {'task': task}, request)
+    t = get_object_or_404(Task, pk=task_id)
+    task_actions = TaskAction.objects.select_related().filter(task=t, before_development=True)
+    return render('glue/show_task.html', {'task': t, 'task_actions': task_actions}, request)
 
 
 @login_required
@@ -183,4 +186,23 @@ def update_task_action(request):
 
     return HttpResponse(simplejson.dumps(response_dict), mimetype='application/javascript');
 
+
+@login_required
+def get_task(request):
+    response_dict = {}
+    try:
+	task_id = request.GET.get('task_id')
+	task = get_object_or_404(Task, pk=task_id)
+	data = serializers.serialize("json", [task])
+
+    	response_dict.update({'task': data})
+	
+    except Exception as e:
+	print e
+	print "Unexpected error:", sys.exc_info()[0]
+    	return HttpResponse(str(e))
+    response_dict.update({'success': True})
+   
+
+    return HttpResponse(simplejson.dumps(response_dict), mimetype='application/javascript');
 
