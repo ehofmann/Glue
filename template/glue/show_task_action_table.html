@@ -5,15 +5,68 @@
 
 <script type="text/javascript">
 	$(document).ready(function(){
-     		$("#action1").html("lala");
-	
-		$.get("/glue/do_action/2/", function(text) {
-		       // format and output result
-			alert(text);     
-		});
+     		//$("#action2").html("lala");
 
+		$("#a_action2").click(function(event){
+			$.get("/glue/do_action/2/", function(text) {
+			       // format and output result
+				$("#action2").html(text);
+			});
+   		});
 
+		
 	});
+
+	function updateTask(task_action_id)
+	{
+
+		enabledName = "#enabledCheckbox" + task_action_id;
+		finishedName = "#finishedCheckbox" + task_action_id;
+		enabled = $(enabledName).attr("checked");
+		finished = $(finishedName).attr("checked");
+		$.get("/glue/update_task_action", {
+			'task_action_id': task_action_id, 
+			'enabled': enabled, 
+			'finished': finished
+			}, 
+			function(text) {
+		       		// format and output result
+				eval("data=" + text);
+				success = data['success'];
+				if (!success)
+				{
+					alert("Error: Change could not be saved");
+				} 
+			}
+		);
+		
+	};
+
+	function execute(task_action_id)
+	{
+		$.get("/glue/do_action/", {
+			'task_action_id': task_action_id, 
+			}, 
+			function(data) {
+		       		// format and output result
+				eval("data=" + data);
+				success = data['success'];
+				if (success)
+				{
+					finishedName = "#finishedCheckbox" + task_action_id;
+					$(finishedName).attr("checked", true);
+						
+				}
+				else
+				{
+					alert("Error: Action did not complete successful.");
+				}
+				 
+			}
+		);
+		
+	};
+
 </script>
 
 {% endblock %}
@@ -30,29 +83,41 @@
 			<th> Description </th>
 			<th> Enabled? </th>
 			<th> Finished? </th>
-		
+			<th> </th>
 	</thead>
 	
    {% for task_action in task_actions %}
-	<tr>
-		<td>{{task_action.action.name}}</td>
-		<td>{{task_action.action.description}}</td>
-		<td><input type="checkbox" 
-		{% if task_action.enabled %}
-		checked="checked"
-		{% endif %} id="enabled" onClick="toggleEnabled({{task_action.id}})" DISABLED/> </td>
+	<div id="action{{task_action.id}}">
+		<tr>
+			<td>{{task_action.action.name}}</td>
+			<td>{{task_action.action.description}}</td>
+			<td>
+				<input type="checkbox" 
+					id="enabledCheckbox{{task_action.id}}"
+				{% if task_action.enabled %}
+				checked="checked"
+				{% endif %} id="enabled" 
+				onclick="updateTask({{task_action.id}});"
+				/> 
+			</td>
 
-	<td><input type="checkbox" 
-	{% if task_action.finished%}
-	checked="checked"
-	{% endif %} id="enabled" DISABLED/> </td>
-	</tr>
+			<td><input type="checkbox" 
+				id="finishedCheckbox{{task_action.id}}"
+			{% if task_action.finished%}
+			checked="checked"
+			{% endif %} id="finished"
+			onclick="updateTask({{task_action.id}});"
+			/> </td>
+			<td>
+				<a onclick="execute({{task_action.id}});" id="execute{{task_action.id}}"> execute </a>
+			</td>
+		</tr>
+	</div>
   {% endfor %}
 </table>
 
-<div id="action1">
-action1 div
-</div>
-
+<a>execute enabled unfinished actions</a>
+<br/>
 <a href={{next_step}}>next</a>
+
 {% endblock %}

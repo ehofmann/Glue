@@ -7,6 +7,7 @@ from django.contrib.auth import logout,authenticate, login
 from django.forms import ModelForm
 from django.forms.models import modelformset_factory
 from django.http import HttpResponse
+from django.utils import simplejson
 
 
 from glue.models import *
@@ -139,22 +140,47 @@ def do_actions(request, task_id, when):
     return render('glue/action_results.html', {'action_results': action_results}, request)
 
 @login_required
-def do_action(request, action_id):
+def do_action(request):
+    print "do_action"
+    response_dict = {}
     try:
-	    print "do_action"
+	    task_action_id = request.GET.get('task_action_id')
 	    print "Searching action"
-	    task_action = get_object_or_404(TaskAction, pk=action_id)
+	    task_action = get_object_or_404(TaskAction, pk=task_action_id)
 	    print "Creating manager"
 	    manager = ActionManager([task_action])
 	    print "Executing manager"
 	    action_results = manager.execute()
 	    print "Printing results"
 	    print str(action_results)
-	    #return HttpResponse("hallo")
     except Exception as e:
 	print e
 	print "Unexpected error:", sys.exc_info()[0]
     	return HttpResponse(str(e))
-    return render('glue/action_result.html', {}, request)
+    response_dict.update({'success': True})
+    return HttpResponse(simplejson.dumps(response_dict), mimetype='application/javascript');
+
+
+@login_required
+def update_task_action(request):
+    response_dict = {}
+    try:
+	task_action_id = request.GET.get('task_action_id')
+	enabled = request.GET.get('enabled') == "true"
+	finished = request.GET.get('finished') == "true"
+	print "%s,%s,%s" % (task_action_id, enabled, finished)
+
+	task_action = get_object_or_404(TaskAction, pk=task_action_id)
+	task_action.enabled = enabled
+	task_action.finished = finished
+	task_action.save()
+	
+    except Exception as e:
+	print e
+	print "Unexpected error:", sys.exc_info()[0]
+    	return HttpResponse(str(e))
+    response_dict.update({'success': True})
+
+    return HttpResponse(simplejson.dumps(response_dict), mimetype='application/javascript');
 
 
