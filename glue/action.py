@@ -21,6 +21,10 @@ class Action():
 	self.__provided_parameters = provided_parameters
 	self.__name = name
         self.__description = description
+
+    def get_model(self):
+	return self.__model
+    model = property(get_model)
     
     def __unicode__(self):
         return self.model.__unicode__()
@@ -68,7 +72,7 @@ class CreateComponentBrainRequirementAction(Action):
 			)
     
     def execute(self):
-	return ["Creating component brain requirement from module brain requirement: %s" % self.model.action_description]
+	return ["Creating component brain requirement from module brain requirement: %s" % self.model.action.description]
 
 class ActionFactory():
         

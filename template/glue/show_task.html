@@ -7,20 +7,33 @@
 	{
 		return string.charAt(0).toUpperCase() + string.slice(1);
 	}
-	
 
-	function getParameterTable(fields, originalModelType)
+	function nameToLabel(name)
+	{
+		var label = name.replace(/_/g, " ");
+		label = capitaliseFirstLetter(label);	
+		return label;
+	}	
+
+	function getParameterTable(fields, originalModelType, id)
 	{
 		modelType = capitaliseFirstLetter(originalModelType);
 		header = '';
 		body = '';
+		$.each(['project', 'component', 'user'], function(index, exclude) { 
+			if (exclude in fields)
+				delete fields[exclude];
+		});
 		for (key in fields)
 		{
-			header += "<th>" + key + "</th>";
+			header += "<th>" + nameToLabel(key) + "</th>";
 			body += '<td id="' + modelType + '_' + key + '">' + fields[key] + "</td>";
 		}	
-		table = '<table border="1"><tr>' + header + '</tr>' +
-			'<tr>' + body + '</tr></table>';
+		table = '<table border="1"><thead><tr>' + header + '</tr></thead>' +
+			'<tbody><tr>' + body + 
+					'</tr></tbody></table>' +
+					'<a href="/admin/glue/' + originalModelType + '/' + id +'/">edit</a>' +
+					'<br/>';
 		return table;
 	}
 
@@ -39,7 +52,8 @@
 					$.each(['project', 'component', 'task'], function(index, modelType) { 
 						var model_json = data[modelType];
 						var model = jQuery.parseJSON(model_json)[0];
-						var paramTable = getParameterTable(model.fields, modelType);
+						var id = data[modelType + '_id'];
+						var paramTable = getParameterTable(model.fields, modelType, id);
 						html += paramTable + '';
 					});
 					
@@ -79,8 +93,9 @@
 		{%for task_action in task_actions %}
 			var missing_parameters = $("#missing_parameters{{task_action.id}}").html();
 			var enabled = $("#enabledCheckbox{{task_action.id}}").attr("checked");
+			var finished = $("#finishedCheckbox{{task_action.id}}").attr("checked");
 			var isParameterMissing = missing_parameters !== "";
-			changeExecuteState({{task_action.id}}, enabled && !isParameterMissing);
+			changeExecuteState({{task_action.id}}, enabled && !finished && !isParameterMissing);
 		{% endfor %}
 
 	}

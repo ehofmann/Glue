@@ -158,7 +158,7 @@ def get_task(request):
 	component = serializers.serialize("json", [task.component])
 	project = serializers.serialize("json", [task.component.project])
 
-    	response_dict.update({'task': data, 'component': component, 'project': project})
+    	response_dict.update({'task': data, 'component': component, 'project': project, "task_id": task.id, 'component_id': task.component.id, 'project_id': task.component.project.id})
 	
     except Exception as e:
 	print e
