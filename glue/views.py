@@ -10,10 +10,8 @@ from django.http import HttpResponse
 from django.utils import simplejson
 from django.core import serializers
 
-
-
 from glue.models import *
-from glue.action import ActionManager
+from glue.action import ActionManager, init_actions, get_class
 
 import sys
 
@@ -47,59 +45,35 @@ def user_dashboard(request):
 @login_required
 def task(request, task_id):
     t = get_object_or_404(Task, pk=task_id)
-    task_actions = TaskAction.objects.select_related().filter(task=t, before_development=True)
-    return render('glue/show_task.html', {'task': t, 'task_actions': task_actions}, request)
+    # the following could improve performance, but did not work once... maybe some kind
+    # of cache issue. The taskactions where  not found.
+    #task_actions = TaskAction.objects.select_related().filter(task=t)
+    task_actions = TaskAction.objects.filter(task=t)
+    print "task id %s: task_actions = %s" % (task_id, task_actions)
+    #parameter_dependencies = {}
+    actionsRequiringParameter = {}
+    for task_action in task_actions:
+	action = get_class(task_action.action.classname)(task_action)
+	#parameter_dependencies[task_action.id] = (action.get_required_parameters(), action.get_provided_parameters())
+	for param in action.get_required_parameters():
+		if not param in actionsRequiringParameter:
+			actionsRequiringParameter[param] = []
+		actionsRequiringParameter[param].append(task_action.id);
 
-
-@login_required
-def show_task_actions(request, task_id):
-    t = get_object_or_404(Task, pk=task_id)
-    task_actions = TaskAction.objects.select_related().filter(task=t)
-    return render('glue/show_task_actions.html', {'task_actions': task_actions}, request)
-
-
-@login_required
-def show_task_action_table(request, task_id):
-    t = get_object_or_404(Task, pk=task_id)
-    task_actions = TaskAction.objects.select_related().filter(task=t, before_development=True)
-    #TaskActionFormSet = inlineformset_factory(TaskAction, Task, extra=0)
-    #formset = TaskActionFormSet(queryset=TaskAction.objects.select_related().filter(task=t))
-
-    return render('glue/show_task_action_table.html', {'task_actions': task_actions}, request)
-
-
-@login_required
-def show_actions_before(request, task_id):
-    t = get_object_or_404(Task, pk=task_id)
-    task_actions = TaskAction.objects.select_related().filter(task=t, before_development=False)
-    #TaskActionFormSet = inlineformset_factory(TaskAction, Task, extra=0)
-    #formset = TaskActionFormSet(queryset=TaskAction.objects.select_related().filter(task=t))
-
-    return render('glue/show_task_action_table.html', 
-                  {'task_actions': task_actions, 
-                   'next_step': '/glue/do_actions/%s/before' % task_id},
-                    request)
-
-
-@login_required
-def show_actions_after(request, task_id):
-    t = get_object_or_404(Task, pk=task_id)
-    task_actions = TaskAction.objects.select_related().filter(task=t, before_development=false)
-    #TaskActionFormSet = inlineformset_factory(TaskAction, Task, extra=0)
-    #formset = TaskActionFormSet(queryset=TaskAction.objects.select_related().filter(task=t))
-
-    return render('glue/show_task_action_table.html', 
-                  {'task_actions': task_actions, 
-                   'next_step': '/glue/do_actions/%s/after' % task_id},
-                    request)
-
+    return render('glue/show_task.html', {'task': t, 'task_actions': task_actions, 'actionsRequiringParameter': actionsRequiringParameter}, request)
 
 @login_required
 def create_task(request):
     if request.method == 'POST': # If the form has been submitted...
         form = TaskForm(request.POST) # A form bound to the POST data
         if form.is_valid(): # All validation rules pass
-            form.save()
+            task = form.save()
+	    #Create taskactions for task
+	    init_actions()
+	    for action in Action.objects.all():
+		new_taskaction = TaskAction(action=action, task=task)
+		new_taskaction.save()
+
             return HttpResponseRedirect('/glue/dashboard/') # Redirect after POST
     else:
         form = TaskForm() # An unbound form
@@ -128,19 +102,7 @@ def create_project(request):
 
     return render('glue/create_project.html', {'form': form}, request)
 
-@login_required
-def do_actions(request, task_id, when):
-    is_before = when == 'before'
-    t = get_object_or_404(Task, pk=task_id)
-    task_actions = TaskAction.objects.select_related().filter(task=t, 
-	before_development=is_before,
-	enabled=True,
-	visible=True)
 
-    manager = ActionManager(task_actions)
-    action_results = manager.execute()
-
-    return render('glue/action_results.html', {'action_results': action_results}, request)
 
 @login_required
 def do_action(request):
@@ -183,7 +145,6 @@ def update_task_action(request):
 	print "Unexpected error:", sys.exc_info()[0]
     	return HttpResponse(str(e))
     response_dict.update({'success': True})
-
     return HttpResponse(simplejson.dumps(response_dict), mimetype='application/javascript');
 
 
@@ -194,15 +155,71 @@ def get_task(request):
 	task_id = request.GET.get('task_id')
 	task = get_object_or_404(Task, pk=task_id)
 	data = serializers.serialize("json", [task])
+	component = serializers.serialize("json", [task.component])
+	project = serializers.serialize("json", [task.component.project])
 
-    	response_dict.update({'task': data})
+    	response_dict.update({'task': data, 'component': component, 'project': project})
 	
     except Exception as e:
 	print e
 	print "Unexpected error:", sys.exc_info()[0]
     	return HttpResponse(str(e))
     response_dict.update({'success': True})
-   
-
     return HttpResponse(simplejson.dumps(response_dict), mimetype='application/javascript');
 
+#@login_required
+#def show_task_actions(request, task_id):
+#    t = get_object_or_404(Task, pk=task_id)
+#    task_actions = TaskAction.objects.select_related().filter(task=t)
+#    return render('glue/show_task_actions.html', {'task_actions': task_actions}, request)
+
+
+#@login_required
+#def show_task_action_table(request, task_id):
+#    t = get_object_or_404(Task, pk=task_id)
+#    task_actions = TaskAction.objects.select_related().filter(task=t, before_development=True)
+#    #TaskActionFormSet = inlineformset_factory(TaskAction, Task, extra=0)
+#    #formset = TaskActionFormSet(queryset=TaskAction.objects.select_related().filter(task=t))
+#
+#    return render('glue/show_task_action_table.html', {'task_actions': task_actions}, request)
+#
+#
+#@login_required
+#def show_actions_before(request, task_id):
+#    t = get_object_or_404(Task, pk=task_id)
+#    task_actions = TaskAction.objects.select_related().filter(task=t, before_development=False)
+#    #TaskActionFormSet = inlineformset_factory(TaskAction, Task, extra=0)
+#    #formset = TaskActionFormSet(queryset=TaskAction.objects.select_related().filter(task=t))
+#
+#    return render('glue/show_task_action_table.html', 
+#                  {'task_actions': task_actions, 
+#                   'next_step': '/glue/do_actions/%s/before' % task_id},
+#                    request)
+#
+
+#@login_required
+#def show_actions_after(request, task_id):
+#    t = get_object_or_404(Task, pk=task_id)
+#    task_actions = TaskAction.objects.select_related().filter(task=t, before_development=false)
+#    #TaskActionFormSet = inlineformset_factory(TaskAction, Task, extra=0)
+#    #formset = TaskActionFormSet(queryset=TaskAction.objects.select_related().filter(task=t))
+#
+#    return render('glue/show_task_action_table.html', 
+#                  {'task_actions': task_actions, 
+#                   'next_step': '/glue/do_actions/%s/after' % task_id},
+#                    request)
+#
+
+#@login_required
+#def do_actions(request, task_id, when):
+#    is_before = when == 'before'
+#    t = get_object_or_404(Task, pk=task_id)
+#    task_actions = TaskAction.objects.select_related().filter(task=t, 
+#	before_development=is_before,
+#	enabled=True,
+#	visible=True)
+#
+#    manager = ActionManager(task_actions)
+#    action_results = manager.execute()
+#
+#    return render('glue/action_results.html', {'action_results': action_results}, request)

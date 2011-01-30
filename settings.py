@@ -108,3 +108,5 @@ INSTALLED_APPS = (
     'glue',
     'django_evolution',
 )
+
+
