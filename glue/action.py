@@ -69,9 +69,33 @@ class CreateIstComponentVersion(Action):
         Action.__init__(self, 
 			model,
 			["Component_ist_version"], 
-			["Component_ist_version_created"],
+			[],
 			"IST version",
 			"Creates the IST component version, if it does not exist yet",
+			)
+
+class UpdateReleaseListVersion(Action): 
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Component_ist_version", "Project_release_list_project_name"], 
+			[],
+			"Release list version",
+			"Updates the release list with the component version",
+			)
+
+class UpdateReleaseListSrsVersion(Action): 
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Component_srs_version"], 
+			[],
+			"Release list SRS version",
+			"Updates the release list with the component SRS version",
 			)
 
 class CreateBrainComponentVersion(Action): 
@@ -85,20 +109,6 @@ class CreateBrainComponentVersion(Action):
 			"Brain component version baseline",
 			"Creates the brain component version baseline, if it does not exist yet",
 			)
-
-class CreateCr(Action): 
-    def __init__(	self, 
-			model,
-	):
-        Action.__init__(self, 
-			model,
-			["Task_brain_requirement", "Component_ist_version", "Component_ist_name",
-			"Component_cr_description","Component_cr_synopsis"], 
-			["Task_cr_number"],
-			"Create Cr",
-			"Creates a CR targetting the ist version of the component. The description is copied from the requirement.",
-			)
-    
 
 class CreateComponentBrainRequirementAction(Action): 
     def __init__(	self, 
@@ -115,6 +125,150 @@ class CreateComponentBrainRequirementAction(Action):
     def execute(self):
 	return ["Creating component brain requirement from module brain requirement: %s" % self.model.action.description]
 
+
+class CreateCrFromRequirement(Action): 
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Task_brain_requirement", "Component_ist_version", "Component_ist_name"], 
+			["Task_cr_number", "Task_cr_description", "Task_cr_synopsis"],
+			"Create Cr",
+			"Creates a CR targetting the ist version of the component. If the cr synopsis or description is not available yet, then they are copied from the requirement, if it exists.",
+			)
+class PullIstRecordData(Action): 
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Task_cr_number"], 
+			["Task_cr_description", "Task_cr_synopsis"],
+			"Pull CR/PR data",
+			"Retrieves the CR/PR description and synopsis from ist",
+			)
+
+class CreateNewSrs(Action):
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Component_srs_version", "Component_release_notes_path", "Component_new_srs_name"], 
+			[],
+			"Create New SRS",
+			"Creates a new SRS file from the previous version and updates the properties.",
+			)
+
+class UpdateSrsBaseline(Action):
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Component_version_brain_baseline", "Component_release_notes_path", "Component_new_srs_name"], 
+			[],
+			"Update SRS baseline",
+			"Updates all baseline references to the new component baseline.",
+			)
+
+class UpdateSrsHistory(Action):
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Component_version_brain_baseline", "Component_release_notes_path", "Component_new_srs_name"], 
+			[],
+			"Update SRS history",
+			"Updates the SRS history.",
+			)
+
+class FinishIstRecord(Action): 
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Task_cr_number", "perforce_changelist"], 
+			[],
+			"Finish CR/PR",
+			"Adds the changelists to the CR/PR response. Sets version to corrected.",
+			)
+
+class CreatePomTask(Action):
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Task_cr_number", "Task_cr_description", "Task_cr_synopsis"], 
+			["Task_pom_task_id"],
+			"Create POM task",
+			"Creates a task in POM",
+			)
+
+class FinishPomTask(Action):
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Task_pom_task_id", "Task_workload"],
+			[],
+			"Finish POM task",
+			"Updates POM task with workload and closes it",
+			)
+
+class CreateAndSubmitChangelist(Action):
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Task_cr_number", "Component_perforce_branch"], 
+			["Task_perforce_changelist"],
+			"Changelist",
+			"Creates and submites the changelist for the task.",
+			)
+
+class BrainRequirementNote(Action):
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			required_parameters =   ["Task_cr_number", "Task_brain_requirement"], 
+			provided_parameters =   [""],
+			name = 			"Brain Requirement Note",
+			description = 		"Updates the brain requirement's node with the CR number",
+			)
+
+class UpdateIstVersionDependencies(Action)
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			required_parameters =   ["Component_ist_version", "Component_ist_name"], 
+			provided_parameters =   [""],
+			name = 			"Compatibilities",
+			description = 		"Updates compatibilites in IST.",
+			)
+
+
+class CreateReleaseNotesText(Action):
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			required_parameters =   ["Component_ist_name", "Component_ist_version"], 
+			provided_parameters =   ["Component_release_notes_text"],
+			name = 			"Release notes text",
+			description = 		"Gets all records from IST, that were corrected in the component version and reads the IST compatibilites and creates a release note.",
+			)
 
 class ActionFactory():
         

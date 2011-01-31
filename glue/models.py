@@ -19,12 +19,13 @@ class Component(models.Model):
     previous_ist_version = models.CharField(max_length=20, null=True, blank=True)
     ist_version = models.CharField(max_length=20, null=True, blank=True)
     ist_name = models.CharField(max_length=20, null=True, blank=True)
-    ist_version_created = models.BooleanField()
     release_notes_path = models.CharField(max_length=50, null=True, blank=True)
+    release_notes_text = models.CharField(max_length=100, null=True, blank=True)
     workspace_dir = models.CharField(max_length=50, null=True, blank=True)
     perforce_branch = models.CharField(max_length=50, null=True, blank=True)
     srs_path = models.CharField(max_length=100, null=True, blank=True)
     new_srs_name = models.CharField(max_length=20, null=True, blank=True)
+    srs_version = models.CharField(max_length=20, null=True, blank=True)
     version_brain_baseline = models.CharField(max_length=20, null=True, blank=True)
     user = models.ForeignKey(User)
     project = models.ForeignKey(Project)
@@ -46,7 +47,9 @@ class Task(models.Model):
     finished = models.BooleanField(default=False)
     user = models.ForeignKey(User)
     component = models.ForeignKey(Component)
-    
+    pom_task_id = models.IntegerField(null=True, blank=True)
+    workload = models.DecimalField(max_digits=5, decimal_places=3, null=True, blank=True)
+    perforce_changelist = models.IntegerField(null=True, blank=True)
     def __unicode__(self):
         return "Requirement: %s, CR %s, Description: %s (%s)" % (self.brain_requirement, self.cr_number, self.description, self.user)
     
