@@ -77,7 +77,7 @@
 			
 			var value = $('#{{param}}').html();
 			//alert("Value: of {{param}}: '" + value + "'");
-			if (value === "" || value === "null" | value === "None")
+			if (value === "" || value === "null" || value === "None" || value === "false")
 			{
 				{% for action_id in action_ids %}
 					//alert("Action {{action_id}} requires {{param}}");
@@ -85,7 +85,7 @@
 					html = $("#missing_parameters{{action_id}}").html();
 					if (html !== '')
 						html += ", ";
-					html += "{{param}}";
+					html += '<pre><font color="red">' + nameToLabel("{{param}}") + '</font></pre>';
 					$("#missing_parameters{{action_id}}").html(html);
 				{% endfor %}
 			}
@@ -127,7 +127,7 @@
 		// Need to update the tasks, to disable/enable the checkboxes and
 		// buttons.
 		{% for task_action in task_actions %}
-			updateTask({{task_action.id}});
+			updateActionState({{task_action.id}});
 		{% endfor %}
 		
 	});
@@ -155,7 +155,7 @@
 
 	};
 
-	function updateTask(task_action_id)
+	function updateActionState(task_action_id)
 	{
 		enabledName = "#enabledCheckbox" + task_action_id;
 		finishedName = "#finishedCheckbox" + task_action_id;
@@ -248,7 +248,7 @@
 				{% if task_action.enabled %}
 				checked="checked"
 				{% endif %} id="enabled" 
-				onclick="updateTask({{task_action.id}});"
+				onclick="updateActionState({{task_action.id}});"
 				/> 
 			</td>
 
@@ -257,7 +257,7 @@
 			{% if task_action.finished%}
 			checked="checked"
 			{% endif %}
-			onclick="updateTask({{task_action.id}});"
+			onclick="updateActionState({{task_action.id}});"
 			/> </td>
 			<td>
 				<button onclick="execute({{task_action.id}});" id="execute{{task_action.id}}"> execute </button>

@@ -1,4 +1,5 @@
 import glue
+from glue.models import Task,TaskAction
 
 def get_class( kls ):
     parts = kls.split('.')
@@ -45,6 +46,8 @@ class Action():
         return self.__provided_parameters
     provided_parameters = property(get_provided_parameters)	
 
+    def execute(self):
+	return [self.__model.action.description]
 
 class ManualAction(Action):
     def __init__(self, model):
@@ -59,6 +62,44 @@ class ManualAction(Action):
 	return ["Skipping manual action: %s" % self.model.action_description]
 
     
+class CreateIstComponentVersion(Action): 
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Component_ist_version"], 
+			["Component_ist_version_created"],
+			"IST version",
+			"Creates the IST component version, if it does not exist yet",
+			)
+
+class CreateBrainComponentVersion(Action): 
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Component_ist_version", "Component_previous_ist_version"], 
+			["Component_version_brain_baseline"],
+			"Brain component version baseline",
+			"Creates the brain component version baseline, if it does not exist yet",
+			)
+
+class CreateCr(Action): 
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Task_brain_requirement", "Component_ist_version", "Component_ist_name",
+			"Component_cr_description","Component_cr_synopsis"], 
+			["Task_cr_number"],
+			"Create Cr",
+			"Creates a CR targetting the ist version of the component. The description is copied from the requirement.",
+			)
+    
+
 class CreateComponentBrainRequirementAction(Action): 
     def __init__(	self, 
 			model,
@@ -73,6 +114,7 @@ class CreateComponentBrainRequirementAction(Action):
     
     def execute(self):
 	return ["Creating component brain requirement from module brain requirement: %s" % self.model.action.description]
+
 
 class ActionFactory():
         
@@ -101,7 +143,7 @@ class ActionManager():
 
 
 def get_action_names():
-	return ['glue.action.CreateComponentBrainRequirementAction']
+	return ['glue.action.CreateComponentBrainRequirementAction', 'glue.action.CreateIstComponentVersion']
 
 initialized = False
 
@@ -125,6 +167,9 @@ def init_actions():
 								description=a.get_description(), 
 								name=a.get_name())
 				new_action.save()
+				for task in Task.objects.all():
+					new_task_action = TaskAction(action=new_action, task=task)
+					new_task_action.save()
 	initialized = True
 
 		

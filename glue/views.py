@@ -44,6 +44,7 @@ def user_dashboard(request):
 
 @login_required
 def task(request, task_id):
+    init_actions()
     t = get_object_or_404(Task, pk=task_id)
     # the following could improve performance, but did not work once... maybe some kind
     # of cache issue. The taskactions where  not found.
@@ -71,6 +72,7 @@ def create_task(request):
 	    #Create taskactions for task
 	    init_actions()
 	    for action in Action.objects.all():
+		print "Creating TaskAction for task %s and action %s" % (task,action)
 		new_taskaction = TaskAction(action=action, task=task)
 		new_taskaction.save()
 
