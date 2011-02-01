@@ -1,4 +1,5 @@
 import glue
+from glue.introspection import get_action_class_names
 from glue.models import Task,TaskAction
 
 def get_class( kls ):
@@ -8,6 +9,7 @@ def get_class( kls ):
     for comp in parts[1:]:
 	m = getattr(m, comp)            
     return m 
+
 
 class Action():
     def __init__(self,
@@ -68,7 +70,19 @@ class CreateIstComponentVersion(Action):
 	):
         Action.__init__(self, 
 			model,
-			["Component_ist_version"], 
+			["Component_ist_version", "Component_previous_ist_version"], 
+			[],
+			"IST version",
+			"Creates the IST component version, if it does not exist yet",
+			)
+
+class CreateParamDbVersion(Action): 
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Component_ist_version", "Component_previous_ist_version"], 
 			[],
 			"IST version",
 			"Creates the IST component version, if it does not exist yet",
@@ -245,7 +259,7 @@ class BrainRequirementNote(Action):
 			description = 		"Updates the brain requirement's node with the CR number",
 			)
 
-class UpdateIstVersionDependencies(Action)
+class UpdateIstVersionDependencies(Action):
     def __init__(	self, 
 			model,
 	):
@@ -296,8 +310,9 @@ class ActionManager():
 		return results
 
 
-def get_action_names():
-	return ['glue.action.CreateComponentBrainRequirementAction', 'glue.action.CreateIstComponentVersion']
+#def get_action_names():
+	#get_action_classes()
+#	return ['glue.action.CreateComponentBrainRequirementAction', 'glue.action.CreateIstComponentVersion']
 
 initialized = False
 
@@ -305,13 +320,17 @@ def init_actions():
 	global initialized
 	if initialized == False:
 		print "init_actions"
-		for name in get_action_names():
+		for name in get_action_class_names():
 			print "Action: %s" % name
 			
 			try:
-				a = glue.models.Action.objects.get(classname=name)
+				existing_action = glue.models.Action.objects.get(classname=name)
 				print "Action %s already in db" % name
-				print "action description %s" % a.description
+				print "action description %s" % existing_action.description
+				a = glue.action.get_class(name)(existing_action)
+				existing_action.description = a.get_description()
+				existing_action.name = a.get_name()
+				existing_action.save()
 			except glue.models.Action.DoesNotExist:
 				print "Creating action: %s" % name
 			        model = ""	

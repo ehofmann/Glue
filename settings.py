@@ -23,7 +23,12 @@ DATABASES = {
         'PASSWORD': '',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
-    }
+    },
+    #'db_multi': {
+	#    'ENGINE': 'sqlite3',
+	#    'NAME': 'test_glue.db',
+    #},
+
 }
 
 TEMPLATE_CONTEXT_PROCESSORS = ("django.core.context_processors.auth", "django.core.context_processors.debug", "django.core.context_processors.i18n", "django.core.context_processors.media", 'django.core.context_processors.request',)

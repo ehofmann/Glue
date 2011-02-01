@@ -19,6 +19,7 @@ class Component(models.Model):
     previous_ist_version = models.CharField(max_length=20, null=True, blank=True)
     ist_version = models.CharField(max_length=20, null=True, blank=True)
     ist_name = models.CharField(max_length=20, null=True, blank=True)
+    ist_version_created = models.BooleanField(default=False)
     release_notes_path = models.CharField(max_length=50, null=True, blank=True)
     release_notes_text = models.CharField(max_length=100, null=True, blank=True)
     workspace_dir = models.CharField(max_length=50, null=True, blank=True)
