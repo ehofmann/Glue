@@ -51,17 +51,17 @@ class Action():
     def execute(self):
 	return [self.__model.action.description]
 
-class ManualAction(Action):
-    def __init__(self, model):
-        Action.__init__(self, model,
-			[],
-			[],
-			"Manual Action",
-			"Do the task manual")
-        
-
-    def execute(self):
-	return ["Skipping manual action: %s" % self.model.action_description]
+#class ManualAction(Action):
+#    def __init__(self, model):
+#        Action.__init__(self, model,
+#			[],
+#			[],
+#			"Manual Action",
+#			"Do the task manual")
+#        
+#
+#    def execute(self):
+#	return ["Skipping manual action: %s" % self.model.action_description]
 
     
 class CreateIstComponentVersion(Action): 
@@ -321,6 +321,7 @@ def init_actions():
 	if initialized == False:
 		print "init_actions"
 		for name in get_action_class_names():
+			name = "glue.action.%s" % name
 			print "Action: %s" % name
 			
 			try:

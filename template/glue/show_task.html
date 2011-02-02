@@ -1,7 +1,42 @@
 {% extends "base.html" %}
 
 {% block script %}
-<!--script type="text/javascript" src="jquery.busy.js"></script--> 
+<script type="text/javascript" language="javascript" src="/static/js/jquery.dataTables.js"></script>
+<script type="text/javascript" src="dataTables.dataSourcePlugins.js"></script>
+<script type="text/javascript" charset="utf-8">
+/* Create an array with the values of all the checkboxes in a column */
+$.fn.dataTableExt.afnSortData['dom-checkbox'] = function  ( oSettings, iColumn )
+{
+	var aData = [];
+	$( 'td:eq('+iColumn+') input', oSettings.oApi._fnGetTrNodes(oSettings) ).each( function () {
+		aData.push( this.checked==true ? "1" : "0" );
+	} );
+	return aData;
+}
+$(document).ready(function() {
+
+		$('#action_table').dataTable(
+{
+		"bPaginate": false,
+		"bLengthChange": false,
+		"bFilter": true,
+		"bSort": true,
+		"bInfo": false,
+		"bAutoWidth": false,
+		"aoColumns": [
+			{ "sSortDataType": "dom-text" },
+			{ "sSortDataType": "dom-text" },
+			{ "sSortDataType": "dom-checkbox" },
+			{ "sSortDataType": "dom-checkbox" },
+			null,
+			{ "sSortDataType": "dom-text" },
+		]
+ }
+
+);
+		} );
+</script>
+
 <script type="text/javascript">
 	function capitaliseFirstLetter(string)
 	{
@@ -29,7 +64,8 @@
 			header += "<th>" + nameToLabel(key) + "</th>";
 			body += '<td id="' + modelType + '_' + key + '">' + fields[key] + "</td>";
 		}	
-		table = '<table border="1"><thead><tr>' + header + '</tr></thead>' +
+		table = '<table border="1" ><thead><tr>' + header + '</tr></thead>' +
+			'<caption>' + modelType + ' Parameters</caption>' +
 			'<tbody><tr>' + body + 
 					'</tr></tbody></table>' +
 					'<a href="/admin/glue/' + originalModelType + '/' + id +'/">edit</a>' +
@@ -175,7 +211,7 @@
 				{
 					$(finishedName).attr("checked", finished);
 					changeExecuteState(task_action_id, (!finished) && enabled);
-					changeFinishedState(task_action_id, enabled);
+					//changeFinishedState(task_action_id, finished);
 					handleRequiredParameters();
 				}
 				else
@@ -226,11 +262,11 @@
 <button onClick=getTask({{task.id}})>refresh</button>
 <br/>
 <br/>
-<table>
+<table id="action_table" width="1000">
 	<thead>
 		<tr>
 			<th> Action </th>
-			<th width="400"> Description </th>
+			<th> Description </th>
 			<th> Enabled? </th>
 			<th> Finished? </th>
 			<th> </th>
@@ -239,7 +275,7 @@
 	
    {% for task_action in task_actions %}
 	<div id="action{{task_action.id}}">
-		<tr>
+		<tr width="1000">
 			<td>{{task_action.action.name}}</td>
 			<td>{{task_action.action.description}}</td>
 			<td>
