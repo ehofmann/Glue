@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Create Component</h1>
+<h1>Create or Edit Component</h1>
 
 <form action="/glue/create_component/" method="post">{% csrf_token %}
+<input type="hidden" id="id" name="id" value="{{form.id}}" />
 {{ form.as_p }}
 <input type="submit" value="Submit" />
 </form>

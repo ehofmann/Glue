@@ -3,27 +3,32 @@
 {% block content %}
 <h1>Dashboard</h1>
 
-<h2>Todo</h2>
+{% for group, tasks in task_groups.items %}
 
-{% if todo_tasks %}
-    <ul>
-    {% for task in todo_tasks %}
-        <li><a href="/glue/task/{{ task.id }}/">{{ task }}</a></li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No tasks to do.</p>
-{% endif %}
+	<h2>{{group}}</h2>
 
-<h2>Done</h2>
-{% if done_tasks %}
-    <ul>
-    {% for task in done_tasks %}
-  		<li><a href="/glue/task/{{ task.id }}/">{{ task }}</a></li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No tasks done yet.</p>
-{% endif %}
-
+	{% if tasks %}
+	    <table>
+		<thead>
+			<tr>
+				<th>Task</th>
+				<th>Component</th>
+				<th>Project</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for task in tasks %}
+			<tr>
+				<td><a href="/glue/task/{{ task.id }}">{{ task.description }}</a></td>
+				<td><a href="/glue/create_component/?id={{ task.component.id }}">{{ task.component.ist_name }}</a></td>
+				<td><a href="/glue/create_project/?id={{ task.component.project.id }}">{{ task.component.project.name }}</a></td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	    </table>
+	{% else %}
+	    <p>No tasks.</p>
+	{% endif %}
+{% endfor %}
 {% endblock %}
+

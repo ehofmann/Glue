@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Dashboard</h1>
+
+
+
+<h2>Todo</h2>
+
+{% if todo_tasks %}
+    <table>
+	<thead>
+		<tr>
+			<th>Task</th>
+			<th>Component</th>
+			<th>Project</th>
+		</tr>
+	</thead>
+	<tbody>
+    		{% for task in todo_tasks %}
+		<tr>
+			<td><a href="/glue/create_task/?task_id={{ task.id }}">{{ task.description }}</a></td>
+			<td><a href="/glue/create_component/?component_id={{ task.component.id }}">{{ task.component.ist_name }}</a></td>
+			<td><a href="/glue/create_project/?project_id={{ task.component.project.id }}">{{ task.component.project.name }}</a></td>
+		</tr>
+    		{% endfor %}
+	</tbody>
+    </table>
+{% else %}
+    <p>No tasks to do.</p>
+{% endif %}
+
+<h2>Done</h2>
+{% if done_tasks %}
+    <table>
+	<thead>
+		<tr>
+			<th>Task</th>
+			<th>Component</th>
+			<th>Project</th>
+		</tr>
+	</thead>
+	<tbody>
+    		{% for task in done_tasks %}
+        	<tr>
+			<td><a href="/glue/create_task/?task_id={{ task.id }}">{{ task.description }}</a></td>
+			<td><a href="/glue/create_component/?component_id={{ task.component.id }}">{{ task.component.ist_name }}</a></td>
+			<td><a href="/glue/create_project/?project_id={{ task.component.project.id }}">{{ task.component.project.name }}</a></td>
+		</tr>
+    		{% endfor %}
+    	</tbody>
+    </table>
+{% else %}
+    <p>No tasks done yet.</p>
+{% endif %}
+
+{% endblock %}
+
