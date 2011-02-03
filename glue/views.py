@@ -67,55 +67,58 @@ def task(request, task_id):
 @login_required
 def create_task(request):
     print "create task"
-    if request.method in ['POST', 'GET']: # If the form has been submitted...
-	print "method %s" % request.method
-	try:
-		print "trying to get the task id"
-		task_id = request.GET.get('task_id')
-		task = Task.objects.get(id=task_id)
-        	form = TaskForm(instance=task) # An unbound form
-	ept KeyError:
-		form = TaskForm(request.POST) # A form bound to the POST data
-		if form.is_valid(): # All validation rules pass
-		    task = form.save()
-		    #Create taskactions for task
-		    init_actions()
-		    for action in Action.objects.all():
-			print "Creating TaskAction for task %s and action %s" % (task,action)
-			new_taskaction = TaskAction(action=action, task=task)
-			new_taskaction.save()
-            	    return HttpResponseRedirect('/glue/dashboard/') # Redirect after POST
+    if request.method == 'GET': # If the form has been submitted...
+        print "method %s" % request.method
+        print "trying to get the task id"
+        id = request.GET.get('id')
+        task = Task.objects.get(id=id)
+        form = TaskForm(instance=task) # An unbound form
+    elif request.method == 'POST':
+	form = TaskForm(request.POST) # A form bound to the POST data
+	if form.is_valid(): # All validation rules pass
+	    task = form.save()
+	    #Create taskactions for task
+	    init_actions()
+	    for action in Action.objects.all():
+		print "Creating TaskAction for task %s and action %s" % (task,action)
+		new_taskaction = TaskAction(action=action, task=task)
+		new_taskaction.save()
+	    return HttpResponseRedirect('/glue/dashboard/') # Redirect after POST
     else:
         form = TaskForm() # An unbound form
     return render('glue/create_task.html', {'form': form}, request)
 
 @login_required
 def create_component(request):
-	return create(request, Component, ComponentForm, 'glue/create_component.html')
+	return create(request, Component, ComponentForm, 'Component')
 
 @login_required
-def create(request, model_class, form_class, page):
+def create(request, model_class, form_class, modelType):
     if request.method == 'GET': # If the form has been submitted...
 	id = request.GET.get('id')
+	next_link = request.GET.get('next')
 	model = model_class.objects.get(id=id)
 	form = form_class(instance=model) # An unbound form
 	form.id = id
+	form.next = next_link
+	form.modelType = modelType
     elif request.method == 'POST': # If the form has been submitted...
 	id = request.POST.get('id')
+	next_link = request.GET.get('next')
 	model  = model_class.objects.get(id=id)
 	form = form_class(request.POST, instance=model) # A form bound to the POST data
 	if form.is_valid(): # All validation rules pass
 	    model = form.save()
-	    return HttpResponseRedirect('/glue/dashboard/') # Redirect after POST
+	    return HttpResponseRedirect(next_link) # Redirect after POST
 		
     else:
 	print "create component create new"
         form = ComponentForm() # An unbound form
-    return render(page, {'form': form}, request)
+    return render('glue/create_model.html', {'form': form}, request)
 
 @login_required
 def create_project(request):
-	return create(request, Project, ProjectForm, 'glue/create_project.html')
+	return create(request, Project, ProjectForm, 'Project')
 
 @login_required
 def do_action(request):
