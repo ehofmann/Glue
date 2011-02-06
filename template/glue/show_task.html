@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 
 {% block script %}
+<link rel="stylesheet" href="/static/css/datatable.css" />
 <script type="text/javascript" language="javascript" src="/static/js/jquery.dataTables.js"></script>
-<script type="text/javascript" src="dataTables.dataSourcePlugins.js"></script>
+<script type="text/javascript" src="/static/js/dataTables.dataSourcePlugins.js"></script>
 <script type="text/javascript" charset="utf-8">
 	/* Create an array with the values of all the checkboxes in a column */
 	$.fn.dataTableExt.afnSortData['dom-checkbox'] = function  ( oSettings, iColumn )
@@ -14,33 +15,19 @@
 		return aData;
 	}
 
-	$(document).ready(function() {
-		$('#action_table').dataTable(
-		{
-			"bPaginate": false,
-			"bLengthChange": false,
-			"bFilter": true,
-			"bSort": true,
-			"bInfo": false,
-			"bAutoWidth": false,
-			"aoColumns": [
-				{ "sSortDataType": "dom-text" },
-				{ "sSortDataType": "dom-text" },
-				{ "sSortDataType": "dom-checkbox" },
-				{ "sSortDataType": "dom-checkbox" },
-				null,
-				{ "sSortDataType": "dom-text" },
-			]
-	 	});
-	});
-</script>
-
-<script type="text/javascript">
+	/**
+	 * Returns the string, with the first letter uppercase
+   * @string The string
+	 */
 	function capitaliseFirstLetter(string)
 	{
 		return string.charAt(0).toUpperCase() + string.slice(1);
 	}
 
+	/**
+	 * Replaces a variable name, to a nicer display name, like ist_name -> Ist name
+   * @name The variable name
+	 */
 	function nameToLabel(name)
 	{
 		var label = name.replace(/_/g, " ");
@@ -48,30 +35,64 @@
 		return label;
 	}	
 
+  /**
+   * Creates an html table from fields (key-value pairs).
+   * The keys become the header column values and the values
+   * are represented in one row. The title of the table is 
+   * made from the originalModelType value. The table can be edited via
+   * a link to the model instance, specified by the (originalModelType,id)
+   * pair.
+   * @param fields The key-value pairs to display.
+   * @param originalModelType The django model type (but lower case), 
+   * for example task, component or project.
+   * @param id The id of the model instance.
+   */
 	function getParameterTable(fields, originalModelType, id)
 	{
-		modelType = capitaliseFirstLetter(originalModelType);
-		header = '';
-		body = '';
+		var modelType = capitaliseFirstLetter(originalModelType);
+		var header = '';
+		var body = '';
+    var undefined_parameters = '';
 		$.each(['project', 'component', 'user'], function(index, exclude) { 
 			if (exclude in fields)
 				delete fields[exclude];
 		});
 		for (key in fields)
 		{
-			header += "<th>" + nameToLabel(key) + "</th>";
-			body += '<td id="' + modelType + '_' + key + '">' + fields[key] + "</td>";
+      if (isParameterValid(fields[key]))
+      {
+			  header += "<th>" + nameToLabel(key) + "</th>";
+			  body += '<td id="' + modelType + '_' + key + '">' + fields[key] + '</td>';
+      }
+      else
+      {
+        if (undefined_parameters !== "")
+        {
+          undefined_parameters += ', '; 
+        }
+        undefined_parameters += key; 
+      }
 		}	
+    if (undefined_parameters !== "")
+    {
+			  header += "<th>Undefined parameters</th>";
+			  body += '<td><font color="red">' + undefined_parameters + "</font></td>";
+    }
 		table = '<table border="1" ><thead><tr>' + header + '</tr></thead>' +
-			'<caption>' + modelType + ' Parameters</caption>' +
+			'<caption align="left">' + modelType + ' Parameters <a href="/glue/create_' + originalModelType + '/?id=' + id +'&next=/glue/task/{{task.id}}/">edit</a>' +'</caption>' +
 			'<tbody><tr>' + body + 
 					'</tr></tbody></table>' +
-					'<a href="/glue/create_' + originalModelType + '/?id=' + id +'&next=glue/show_task.html">edit</a>' +
 					'<br/>';
 		return table;
 	}
 
-	function getTask(task_id)
+  /**
+   * Gets all parameters of the django models related to the task from the server
+   * and updates the parameters table. Then it updates the actions regarding
+   * required parameters.
+   * @param task_id The id of the task.
+   */ 
+	function updateParameters(task_id)
 	{
 		$.get("/glue/get_task/", {
 			'task_id': task_id, 
@@ -91,7 +112,7 @@
 						html += paramTable + '';
 					});
 					
-					$("#task_table").html(html);
+					$("#parameters").html(html);
 					handleRequiredParameters();
 				}
 				else
@@ -102,6 +123,18 @@
 		);
 	};
 
+
+  function isParameterValid(value)
+  {
+    return !(value === "" || value == null || value == "None");
+  }
+
+  /**
+   * Checks if the required parameters of the actions are
+   * available and enables/disables the action accordingly.
+   * Missing parameters are shown in a column in the row of
+   * the action.
+   */
 	function handleRequiredParameters()
 	{
 		{%for task_action in task_actions %}
@@ -111,7 +144,7 @@
 			
 			var value = $('#{{param}}').html();
 			//alert("Value: of {{param}}: '" + value + "'");
-			if (value === "" || value === "null" || value === "None" || value === "false")
+			if (!isParameterValid(value) || value === "false")
 			{
 				{% for action_id in action_ids %}
 					//alert("Action {{action_id}} requires {{param}}");
@@ -119,7 +152,8 @@
 					html = $("#missing_parameters{{action_id}}").html();
 					if (html !== '')
 						html += ", ";
-					html += '<pre><font color="red">' + nameToLabel("{{param}}") + '</font></pre>';
+					//html += '<pre><font color="red">' + nameToLabel("{{param}}") + '</font></pre>';
+					html += nameToLabel("{{param}}");
 					$("#missing_parameters{{action_id}}").html(html);
 				{% endfor %}
 			}
@@ -134,9 +168,32 @@
 
 	}
 
+  /**
+   * This jquery callback is executed on startup of the page.
+   */
 	$(document).ready(function(){
-				
-		getTask({{task.id}});
+
+    /* Sets the properties of the action table*/
+		$('#action_table').dataTable(
+		{
+			"bPaginate": false,
+			"bLengthChange": false,
+			"bFilter": true,
+			"bSort": true,
+			"bInfo": false,
+			"bAutoWidth": false,
+			"aoColumns": [
+				{ "sSortDataType": "dom-text" },
+				{ "sSortDataType": "dom-text" },
+				{ "sSortDataType": "dom-checkbox" },
+				{ "sSortDataType": "dom-checkbox" },
+				null,
+        null
+			]
+	 	});
+			
+    // shows all parameters of the task and related models	
+		updateParameters({{task.id}});
 
 		// for execute links prevent, that they actually connect
 		// to the href. We only want the onclick code to be executed.
@@ -160,9 +217,7 @@
 
 		// Need to update the tasks, to disable/enable the checkboxes and
 		// buttons.
-		{% for task_action in task_actions %}
-			updateActionState({{task_action.id}});
-		{% endfor %}
+		//handleRequiredParameters();
 		
 	});
 
@@ -189,6 +244,7 @@
 
 	};
 
+
 	function updateActionState(task_action_id)
 	{
 		enabledName = "#enabledCheckbox" + task_action_id;
@@ -209,13 +265,10 @@
 				{
 					$(finishedName).attr("checked", finished);
 					changeExecuteState(task_action_id, (!finished) && enabled);
-					//changeFinishedState(task_action_id, finished);
-					handleRequiredParameters();
 				}
 				else
 				{
-					alert("Error: Change could not be saved, refreshing");
-					// refresh
+					alert("Error: Could not update the server with the change.");
 				} 
 			}
 		);
@@ -237,7 +290,7 @@
 					finishedName = "#finishedCheckbox" + task_action_id;
 					$(finishedName).attr("checked", true);
 					changeExecuteState(task_action_id, false);
-					getTask({{task.id}});
+					updateParameters({{task.id}});
 				}
 				else
 				{
@@ -254,10 +307,10 @@
 {% block content %}
 
 <h1>Task</h1>
-<div id="task_table">
-	task_table
+<div id="parameters">
+	Parameters
 </div>
-<button onClick=getTask({{task.id}})>refresh</button>
+<button onClick=updateParameters({{task.id}})>refresh</button>
 <br/>
 <br/>
 <table id="action_table" width="1000">
@@ -267,7 +320,7 @@
 			<th> Description </th>
 			<th> Enabled? </th>
 			<th> Finished? </th>
-			<th> </th>
+			<th> Execute</th>
 			<th> Missing parameters </th>
 	</thead>
 	

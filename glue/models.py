@@ -17,8 +17,8 @@ class Project(models.Model):
     
 class Component(models.Model):
     previous_ist_version = models.CharField(max_length=20, null=True, blank=True)
-    ist_version = models.CharField(max_length=20, null=True, blank=True)
-    ist_name = models.CharField(max_length=20, null=True, blank=True)
+    ist_version = models.CharField(max_length=20)
+    ist_name = models.CharField(max_length=20)
     ist_version_created = models.BooleanField(default=False)
     release_notes_path = models.CharField(max_length=50, null=True, blank=True)
     release_notes_text = models.CharField(max_length=100, null=True, blank=True)
@@ -30,7 +30,6 @@ class Component(models.Model):
     version_brain_baseline = models.CharField(max_length=20, null=True, blank=True)
     user = models.ForeignKey(User)
     project = models.ForeignKey(Project)
-    
     
     def __unicode__(self):
         return "%s - %s (%s)" % (self.ist_name, self.ist_version, self.user)
@@ -46,8 +45,8 @@ class Task(models.Model):
     cr_description = models.CharField(max_length=100, null=True, blank=True)
     description = models.CharField(max_length=100)
     finished = models.BooleanField(default=False)
-    user = models.ForeignKey(User)
-    component = models.ForeignKey(Component)
+    user = models.ForeignKey(User, blank=False)
+    component = models.ForeignKey(Component, blank=False)
     pom_task_id = models.IntegerField(null=True, blank=True)
     workload = models.DecimalField(max_digits=5, decimal_places=3, null=True, blank=True)
     perforce_changelist = models.IntegerField(null=True, blank=True)

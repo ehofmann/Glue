@@ -2,7 +2,6 @@
 
 {% block content %}
 <h1>Create or Edit {{form.modelType}}</h1>
-
 <form action="{{form.link}}" method="post">{% csrf_token %}
 <input type="hidden" id="id" name="id" value="{{form.id}}" />
 <input type="hidden" id="next" name="next" value="{{form.next}}" />
@@ -11,3 +10,6 @@
 </form>
 
 {% endblock %}
+
+
+

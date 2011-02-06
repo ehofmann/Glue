@@ -17,169 +17,225 @@ import sys
 
 # Create the form class.
 class TaskForm(ModelForm):
-    class Meta:
-        model = Task
+  class Meta:
+    model = Task
 
 # Create the form class.
 class ComponentForm(ModelForm):
-    class Meta:
-        model = Component
+  class Meta:
+    model = Component
 
 class ProjectForm(ModelForm):
-    class Meta:
-        model = Project
+  class Meta:
+    model = Project
 
 def render(template, context, request):
-    return render_to_response(template, 
-                              context,
-                              context_instance=RequestContext(request))
+  return render_to_response(template, 
+                context,
+                context_instance=RequestContext(request))
 
 @login_required
 def user_dashboard(request):
-    todo_tasks = Task.objects.filter(finished=False)
-    done_tasks = Task.objects.filter(finished=True)
-    return render('glue/user_dashboard.html', 
-                              #{'todo_tasks': todo_tasks, 'done_tasks': done_tasks},
-                              {'task_groups': {'Done': done_tasks, 'Todo': todo_tasks}},
-                              request)
+  todo_tasks = Task.objects.filter(finished=False)
+  done_tasks = Task.objects.filter(finished=True)
+  return render('glue/user_dashboard.html', 
+                #{'todo_tasks': todo_tasks, 'done_tasks': done_tasks},
+                {'task_groups': {'Done': done_tasks, 'Todo': todo_tasks}},
+                request)
 
 @login_required
 def task(request, task_id):
-    init_actions()
-    t = get_object_or_404(Task, pk=task_id)
-    # the following could improve performance, but did not work once... maybe some kind
-    # of cache issue. The taskactions where  not found.
-    #task_actions = TaskAction.objects.select_related().filter(task=t)
-    task_actions = TaskAction.objects.filter(task=t)
-    print "task id %s: task_actions = %s" % (task_id, task_actions)
-    #parameter_dependencies = {}
-    actionsRequiringParameter = {}
-    for task_action in task_actions:
-	action = get_class(task_action.action.classname)(task_action)
-	#parameter_dependencies[task_action.id] = (action.get_required_parameters(), action.get_provided_parameters())
-	for param in action.get_required_parameters():
-		if not param in actionsRequiringParameter:
-			actionsRequiringParameter[param] = []
-		actionsRequiringParameter[param].append(task_action.id);
+  init_actions()
+  t = get_object_or_404(Task, pk=task_id)
+  # the following could improve performance, but did not work once... maybe some kind
+  # of cache issue. The taskactions where  not found.
+  #task_actions = TaskAction.objects.select_related().filter(task=t)
+  task_actions = TaskAction.objects.filter(task=t)
+  print "task id %s: task_actions = %s" % (task_id, task_actions)
+  #parameter_dependencies = {}
+  actionsRequiringParameter = {}
+  for task_action in task_actions:
+    action = get_class(task_action.action.classname)(task_action)
+    #parameter_dependencies[task_action.id] = (action.get_required_parameters(), action.get_provided_parameters())
+    for param in action.get_required_parameters():
+      if not param in actionsRequiringParameter:
+        actionsRequiringParameter[param] = []
+      actionsRequiringParameter[param].append(task_action.id);
 
-    return render('glue/show_task.html', {'task': t, 'task_actions': task_actions, 'actionsRequiringParameter': actionsRequiringParameter}, request)
+  return render('glue/show_task.html', {'task': t, 'task_actions': task_actions, 'actionsRequiringParameter': actionsRequiringParameter}, request)
 
-@login_required
-def create_task(request):
-    print "create task"
-    if request.method == 'GET': # If the form has been submitted...
-        print "method %s" % request.method
-        print "trying to get the task id"
-        id = request.GET.get('id')
-        task = Task.objects.get(id=id)
-        form = TaskForm(instance=task) # An unbound form
-    elif request.method == 'POST':
-	form = TaskForm(request.POST) # A form bound to the POST data
-	if form.is_valid(): # All validation rules pass
-	    task = form.save()
-	    #Create taskactions for task
-	    init_actions()
-	    for action in Action.objects.all():
-		print "Creating TaskAction for task %s and action %s" % (task,action)
-		new_taskaction = TaskAction(action=action, task=task)
-		new_taskaction.save()
-	    return HttpResponseRedirect('/glue/dashboard/') # Redirect after POST
-    else:
-        form = TaskForm() # An unbound form
-    return render('glue/create_task.html', {'form': form}, request)
+#@login_required
+#def create_task2(request):
+#  print "create task"
+#  if request.method == 'GET': # If the form has been submitted...
+#    print "method %s" % request.method
+#    print "trying to get the task id"
+#    id = request.GET.get('id')
+#    next_link = request.GET.get('next')
+#    task = Task.objects.get(id=id)
+#    form = TaskForm(instance=task) # An unbound form
+#    form.next = next_link 
+#  elif request.method == 'POST':
+#    id = request.POST.get('id')
+#    next_link = request.POST.get('next')
+#    model = Task.objects.get
+#    form = TaskForm(request.POST) # A form bound to the POST data
+#    if form.is_valid(): # All validation rules pass
+#    task = form.save()
+#    #Create taskactions for task
+#    return HttpResponseRedirect(next_link) # Redirect after POST
+#  else:
+#    form = TaskForm() # An unbound form
+#  return render('glue/create_task.html', {'form': form}, request)
 
 @login_required
 def create_component(request):
-	return create(request, Component, ComponentForm, 'Component')
+  return create(request, Component, ComponentForm, 'Component')
+
 
 @login_required
-def create(request, model_class, form_class, modelType):
-    if request.method == 'GET': # If the form has been submitted...
-	id = request.GET.get('id')
-	next_link = request.GET.get('next')
-	model = model_class.objects.get(id=id)
-	form = form_class(instance=model) # An unbound form
-	form.id = id
-	form.next = next_link
-	form.modelType = modelType
-    elif request.method == 'POST': # If the form has been submitted...
-	id = request.POST.get('id')
-	next_link = request.GET.get('next')
-	model  = model_class.objects.get(id=id)
-	form = form_class(request.POST, instance=model) # A form bound to the POST data
-	if form.is_valid(): # All validation rules pass
-	    model = form.save()
-	    return HttpResponseRedirect(next_link) # Redirect after POST
-		
+def create_task(request):
+  """
+  Create or edit a task model instance.
+  """
+  def create_actions(task):
+    """
+    Creates a TaskAction instance for all actions and relates it to the task.
+    """
+    init_actions()
+    for action in Action.objects.all():
+      print "Creating TaskAction for task %s and action %s" % (task,action)
+      new_taskaction = TaskAction(action=action, task=task)
+      new_taskaction.save()
+  return create(request, Task, TaskForm, 'Task', create_actions)
+
+@login_required
+def create(request, model_class, form_class, modelType, post_save_method=None):
+  """
+  Create or edit a model instance
+  When the method is GET, then a form is shown, to either create or edit (if id is passed) the instance.
+  When the method is POST, then we receive the results of the form and either update the model instance (if id is set) or create a new model instance.
+  The GET or POST parameter "next" can be set to a template, that should be rendered.
+  request -- The http request
+  model_class -- The class (like model.Task)
+  form_class -- The class of the form (like TaskForm)
+  modelType -- The name of the model (like 'Task')
+  post_save_method -- A method called after the model instance is saved, taking the model
+                      instance as parameter.
+  """
+  if request.method == 'GET':
+    # Show form
+    id = request.GET.get('id')
+    if id:
+      next_link = request.GET.get('next')
+      model = model_class.objects.get(id=id)
+      form = form_class(instance=model) # An unbound form
+      form.id = id
+      form.next = next_link
+      form.modelType = modelType
     else:
-	print "create component create new"
-        form = ComponentForm() # An unbound form
+      print "create component create new"
+      model = model_class()
+      model.user = request.user
+      form = form_class(instance=model) # An unbound form
+      form.user = request.user
+      form.modelType = modelType
     return render('glue/create_model.html', {'form': form}, request)
+
+  elif request.method == 'POST': # If the form has been submitted...
+    # evaluate form data and create or edit model instance
+
+    # if there is an id parameter then get the corresponding model instance
+    # otherwise create a new model instance
+    id = request.POST.get('id')
+    if id == '':
+      model = model_class();
+    else:
+      model  = model_class.objects.get(id=id)
+    
+    # check that the POST data is valid and save the model instance
+    form = form_class(request.POST, instance=model) # A form bound to the POST data
+    form.modelType = modelType
+    if form.is_valid(): # All validation rules pass
+      model = form.save()
+      
+      # if available then execute the passed method
+      if post_save_method != None:
+        post_save_method(model)
+
+      # Get the next page/link, from the POST, or redirect to dashboard
+      next_link = request.POST.get('next')
+      if next_link == '':
+        next_link = "/glue/dashboard/"
+      return HttpResponseRedirect(next_link) # Redirect after POST
+    else:
+      print "The form is not valid"
+      return render('glue/create_model.html', {'form': form}, request)
 
 @login_required
 def create_project(request):
-	return create(request, Project, ProjectForm, 'Project')
+  return create(request, Project, ProjectForm, 'Project')
 
 @login_required
 def do_action(request):
-    print "do_action"
-    response_dict = {}
-    try:
-	    task_action_id = request.GET.get('task_action_id')
-	    print "Searching action"
-	    task_action = get_object_or_404(TaskAction, pk=task_action_id)
-	    print "Creating manager"
-	    manager = ActionManager([task_action])
-	    print "Executing manager"
-	    action_results = manager.execute()
-	    print "Printing results"
-	    print str(action_results)
-    except Exception as e:
-	print e
-	print "Unexpected error:", sys.exc_info()[0]
-    	return HttpResponse(str(e))
-    response_dict.update({'success': True})
-    return HttpResponse(simplejson.dumps(response_dict), mimetype='application/javascript');
+  print "do_action"
+  response_dict = {}
+  try:
+    task_action_id = request.GET.get('task_action_id')
+    print "Searching action"
+    task_action = get_object_or_404(TaskAction, pk=task_action_id)
+    print "Creating manager"
+    manager = ActionManager([task_action])
+    print "Executing manager"
+    action_results = manager.execute()
+    print "Printing results"
+    print str(action_results)
+  except Exception as e:
+    print e
+    print "Unexpected error:", sys.exc_info()[0]
+    return HttpResponse(str(e))
+  response_dict.update({'success': True})
+  return HttpResponse(simplejson.dumps(response_dict), mimetype='application/javascript');
 
 
 @login_required
 def update_task_action(request):
-    response_dict = {}
-    try:
-	task_action_id = request.GET.get('task_action_id')
-	enabled = request.GET.get('enabled') == "true"
-	finished = request.GET.get('finished') == "true"
-	print "%s,%s,%s" % (task_action_id, enabled, finished)
+  response_dict = {}
+  try:
+    task_action_id = request.GET.get('task_action_id')
+    enabled = request.GET.get('enabled') == "true"
+    finished = request.GET.get('finished') == "true"
+    print "%s,%s,%s" % (task_action_id, enabled, finished)
 
-	task_action = get_object_or_404(TaskAction, pk=task_action_id)
-	task_action.enabled = enabled
-	task_action.finished = finished
-	task_action.save()
-	
-    except Exception as e:
-	print e
-	print "Unexpected error:", sys.exc_info()[0]
-    	return HttpResponse(str(e))
-    response_dict.update({'success': True})
-    return HttpResponse(simplejson.dumps(response_dict), mimetype='application/javascript');
+    task_action = get_object_or_404(TaskAction, pk=task_action_id)
+    task_action.enabled = enabled
+    task_action.finished = finished
+    task_action.save()
+  
+  except Exception as e:
+    print e
+    print "Unexpected error:", sys.exc_info()[0]
+    return HttpResponse(str(e))
+  response_dict.update({'success': True})
+  return HttpResponse(simplejson.dumps(response_dict), mimetype='application/javascript');
 
 
 @login_required
 def get_task(request):
-    response_dict = {}
-    try:
-	task_id = request.GET.get('task_id')
-	task = get_object_or_404(Task, pk=task_id)
-	data = serializers.serialize("json", [task])
-	component = serializers.serialize("json", [task.component])
-	project = serializers.serialize("json", [task.component.project])
+  response_dict = {}
+  try:
+    task_id = request.GET.get('task_id')
+    task = get_object_or_404(Task, pk=task_id)
+    data = serializers.serialize("json", [task])
+    component = serializers.serialize("json", [task.component])
+    project = serializers.serialize("json", [task.component.project])
 
-    	response_dict.update({'task': data, 'component': component, 'project': project, "task_id": task.id, 'component_id': task.component.id, 'project_id': task.component.project.id})
-	
-    except Exception as e:
-	print e
-	print "Unexpected error:", sys.exc_info()[0]
-    	return HttpResponse(str(e))
-    response_dict.update({'success': True})
-    return HttpResponse(simplejson.dumps(response_dict), mimetype='application/javascript');
+    response_dict.update({'task': data, 'component': component, 'project': project, "task_id": task.id, 'component_id': task.component.id, 'project_id': task.component.project.id})
+  
+  except Exception as e:
+    print e
+    print "Unexpected error:", sys.exc_info()[0]
+    return HttpResponse(str(e))
+  response_dict.update({'success': True})
+  return HttpResponse(simplejson.dumps(response_dict), mimetype='application/javascript');
 
