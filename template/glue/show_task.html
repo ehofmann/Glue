@@ -46,6 +46,7 @@
    * @param originalModelType The django model type (but lower case), 
    * for example task, component or project.
    * @param id The id of the model instance.
+   * @param mainModelType the type of the model, for which this whole page is shown.
    */
 	function getParameterTable(fields, originalModelType, id)
 	{
@@ -79,7 +80,7 @@
 			  body += '<td><font color="red">' + undefined_parameters + "</font></td>";
     }
 		table = '<table border="1" ><thead><tr>' + header + '</tr></thead>' +
-			'<caption align="left">' + modelType + ' Parameters <a href="/glue/create_' + originalModelType + '/?id=' + id +'&next=/glue/task/{{task.id}}/">edit</a>' +'</caption>' +
+			'<caption align="left">' + modelType + ' Parameters <a href="/glue/create_' + originalModelType + '/?id=' + id +'&next=/glue/{{model_class|lower}}/{{model.id}}/">edit</a>' +'</caption>' +
 			'<tbody><tr>' + body + 
 					'</tr></tbody></table>' +
 					'<br/>';
@@ -94,7 +95,7 @@
    */ 
 	function updateParameters(task_id)
 	{
-		$.get("/glue/get_task/", {
+		$.get("/glue/get_{{model_class|lower}}/", {
 			'task_id': task_id, 
 			}, 
 			function(data) {
@@ -103,13 +104,20 @@
 				success = data['success'];
 				if (success)
 				{
-					var html = '';
-					$.each(['project', 'component', 'task'], function(index, modelType) { 
-						var model_json = data[modelType];
-						var model = jQuery.parseJSON(model_json)[0];
-						var id = data[modelType + '_id'];
-						var paramTable = getParameterTable(model.fields, modelType, id);
-						html += paramTable + '';
+          var modelNames = ['task', 'component', 'project'];
+          var html = '';
+
+					$.each(modelNames.reverse(), function(index, modelType) { 
+            // check if the model type exists, because if we show a component, 
+            // then there is no task data
+            if (modelType in data)
+            {
+						  var model_json = data[modelType];
+						  var model = jQuery.parseJSON(model_json)[0];
+						  var id = data[modelType + '_id'];
+						  var paramTable = getParameterTable(model.fields, modelType, id);
+						  html += paramTable + '';
+            }
 					});
 					
 					$("#parameters").html(html);
@@ -137,8 +145,8 @@
    */
 	function handleRequiredParameters()
 	{
-		{%for task_action in task_actions %}
-			$("#missing_parameters{{task_action.id}}").html("");
+		{%for model_action in model_actions %}
+			$("#missing_parameters{{model_action.id}}").html("");
 		{% endfor %}
 		{% for param, action_ids in actionsRequiringParameter.items %}
 			
@@ -158,12 +166,12 @@
 				{% endfor %}
 			}
 		{% endfor %}
-		{%for task_action in task_actions %}
-			var missing_parameters = $("#missing_parameters{{task_action.id}}").html();
-			var enabled = $("#enabledCheckbox{{task_action.id}}").attr("checked");
-			var finished = $("#finishedCheckbox{{task_action.id}}").attr("checked");
+		{%for model_action in model_actions %}
+			var missing_parameters = $("#missing_parameters{{model_action.id}}").html();
+			var enabled = $("#enabledCheckbox{{model_action.id}}").attr("checked");
+			var finished = $("#finishedCheckbox{{model_action.id}}").attr("checked");
 			var isParameterMissing = missing_parameters !== "";
-			changeExecuteState({{task_action.id}}, enabled && !finished && !isParameterMissing);
+			changeExecuteState({{model_action.id}}, enabled && !finished && !isParameterMissing);
 		{% endfor %}
 
 	}
@@ -193,18 +201,18 @@
 	 	});
 			
     // shows all parameters of the task and related models	
-		updateParameters({{task.id}});
+		updateParameters({{model.id}});
 
 		// for execute links prevent, that they actually connect
 		// to the href. We only want the onclick code to be executed.
-		{% for task_action in task_actions %}
-			$("#execute" + {{task_action.id}}).click(function(event){
+		{% for model_action in model_actions %}
+			$("#execute" + {{model_action.id}}).click(function(event){
 				event.preventDefault();		
    			});
-			$("#finishedCheckbox" + {{task_action.id}}).click(function(event){
+			$("#finishedCheckbox" + {{model_action.id}}).click(function(event){
 				event.preventDefault();		
    			});
-			jQuery("execute{{task_action.id}}").click(function() { var that = jQuery(this).busy(); setTimeout(function() { that.busy("hide"); }, 2000); }); 
+			jQuery("execute{{model_action.id}}").click(function() { var that = jQuery(this).busy(); setTimeout(function() { that.busy("hide"); }, 2000); }); 
 			
 		{% endfor %}
 
@@ -222,9 +230,9 @@
 	});
 
 
-	function changeExecuteState(task_action_id, enabled)
+	function changeExecuteState(model_action_id, enabled)
 	{
-		executeName = "#execute" + task_action_id;
+		executeName = "#execute" + model_action_id;
 		if(enabled)
 			$(executeName).removeAttr('disabled');
 		else
@@ -233,9 +241,9 @@
 
 	};
 	
-	function changeFinishedState(task_action_id, enabled)
+	function changeFinishedState(model_action_id, enabled)
 	{
-		executeName = "#finishedCheckbox" + task_action_id;
+		executeName = "#finishedCheckbox" + model_action_id;
 		if(enabled)
 			$(executeName).removeAttr('disabled');
 		else
@@ -245,15 +253,15 @@
 	};
 
 
-	function updateActionState(task_action_id)
+	function updateActionState(model_action_id)
 	{
-		enabledName = "#enabledCheckbox" + task_action_id;
-		finishedName = "#finishedCheckbox" + task_action_id;
-		executeName = "#execute" + task_action_id;
+		enabledName = "#enabledCheckbox" + model_action_id;
+		finishedName = "#finishedCheckbox" + model_action_id;
+		executeName = "#execute" + model_action_id;
 		enabled = $(enabledName).attr("checked");
 		finished = $(finishedName).attr("checked");
-		$.get("/glue/update_task_action", {
-			'task_action_id': task_action_id, 
+		$.get("/glue/update_model_action", {
+			'model_action_id': model_action_id, 
 			'enabled': enabled, 
 			'finished': finished
 			}, 
@@ -264,7 +272,7 @@
 				if (success)
 				{
 					$(finishedName).attr("checked", finished);
-					changeExecuteState(task_action_id, (!finished) && enabled);
+					changeExecuteState(model_action_id, (!finished) && enabled);
 				}
 				else
 				{
@@ -276,10 +284,10 @@
 
 
 
-	function execute(task_action_id)
+	function execute(model_action_id)
 	{
 		$.get("/glue/do_action/", {
-			'task_action_id': task_action_id, 
+			'model_action_id': model_action_id, 
 			}, 
 			function(data) {
 		       		// format and output result
@@ -287,10 +295,10 @@
 				success = data['success'];
 				if (success)
 				{
-					finishedName = "#finishedCheckbox" + task_action_id;
+					finishedName = "#finishedCheckbox" + model_action_id;
 					$(finishedName).attr("checked", true);
-					changeExecuteState(task_action_id, false);
-					updateParameters({{task.id}});
+					changeExecuteState(model_action_id, false);
+					updateParameters({{model.id}});
 				}
 				else
 				{
@@ -306,11 +314,11 @@
 
 {% block content %}
 
-<h1>Task</h1>
+<h1>{{model_class}}</h1>
 <div id="parameters">
 	Parameters
 </div>
-<button onClick=updateParameters({{task.id}})>refresh</button>
+<button onClick=updateParameters({{model.id}})>refresh</button>
 <br/>
 <br/>
 <table id="action_table" width="1000">
@@ -324,32 +332,32 @@
 			<th> Missing parameters </th>
 	</thead>
 	
-   {% for task_action in task_actions %}
-	<div id="action{{task_action.id}}">
+   {% for model_action in model_actions %}
+	<div id="action{{model_action.id}}">
 		<tr width="1000">
-			<td>{{task_action.action.name}}</td>
-			<td>{{task_action.action.description}}</td>
+			<td>{{model_action.action.name}}</td>
+			<td>{{model_action.action.description}}</td>
 			<td>
 				<input type="checkbox" 
-					id="enabledCheckbox{{task_action.id}}"
-				{% if task_action.enabled %}
+					id="enabledCheckbox{{model_action.id}}"
+				{% if model_action.enabled %}
 				checked="checked"
 				{% endif %} id="enabled" 
-				onclick="updateActionState({{task_action.id}});"
+				onclick="updateActionState({{model_action.id}});"
 				/> 
 			</td>
 
 			<td><input type="checkbox" 
-				id="finishedCheckbox{{task_action.id}}"
-			{% if task_action.finished%}
+				id="finishedCheckbox{{model_action.id}}"
+			{% if model_action.finished%}
 			checked="checked"
 			{% endif %}
-			onclick="updateActionState({{task_action.id}});"
+			onclick="updateActionState({{model_action.id}});"
 			/> </td>
 			<td>
-				<button onclick="execute({{task_action.id}});" id="execute{{task_action.id}}"> execute </button>
+				<button onclick="execute({{model_action.id}});" id="execute{{model_action.id}}"> execute </button>
 			</td>
-			<td style="color: red;" id="missing_parameters{{task_action.id}}">
+			<td style="color: red;" id="missing_parameters{{model_action.id}}">
 			</td>
 		</tr>
 	</div>

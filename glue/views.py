@@ -39,7 +39,6 @@ def user_dashboard(request):
   todo_tasks = Task.objects.filter(finished=False)
   done_tasks = Task.objects.filter(finished=True)
   return render('glue/user_dashboard.html', 
-                #{'todo_tasks': todo_tasks, 'done_tasks': done_tasks},
                 {'task_groups': {'Done': done_tasks, 'Todo': todo_tasks}},
                 request)
 
@@ -52,46 +51,43 @@ def task(request, task_id):
   #task_actions = TaskAction.objects.select_related().filter(task=t)
   task_actions = TaskAction.objects.filter(task=t)
   print "task id %s: task_actions = %s" % (task_id, task_actions)
-  #parameter_dependencies = {}
   actionsRequiringParameter = {}
   for task_action in task_actions:
     action = get_class(task_action.action.classname)(task_action)
-    #parameter_dependencies[task_action.id] = (action.get_required_parameters(), action.get_provided_parameters())
     for param in action.get_required_parameters():
       if not param in actionsRequiringParameter:
         actionsRequiringParameter[param] = []
       actionsRequiringParameter[param].append(task_action.id);
 
-  return render('glue/show_task.html', {'task': t, 'task_actions': task_actions, 'actionsRequiringParameter': actionsRequiringParameter}, request)
+  return render('glue/show_task.html', {'model': t, 'model_class': 'Task', 'model_actions': task_actions, 'actionsRequiringParameter': actionsRequiringParameter}, request)
 
-#@login_required
-#def create_task2(request):
-#  print "create task"
-#  if request.method == 'GET': # If the form has been submitted...
-#    print "method %s" % request.method
-#    print "trying to get the task id"
-#    id = request.GET.get('id')
-#    next_link = request.GET.get('next')
-#    task = Task.objects.get(id=id)
-#    form = TaskForm(instance=task) # An unbound form
-#    form.next = next_link 
-#  elif request.method == 'POST':
-#    id = request.POST.get('id')
-#    next_link = request.POST.get('next')
-#    model = Task.objects.get
-#    form = TaskForm(request.POST) # A form bound to the POST data
-#    if form.is_valid(): # All validation rules pass
-#    task = form.save()
-#    #Create taskactions for task
-#    return HttpResponseRedirect(next_link) # Redirect after POST
-#  else:
-#    form = TaskForm() # An unbound form
-#  return render('glue/create_task.html', {'form': form}, request)
+@login_required
+def task(request, task_id):
+  return show_model(request, task_id, 'Task')
+
+@login_required
+def show_model(request, instance_id, model_class_name):
+  init_actions()
+  instance = get_object_or_404(get_class('glue.models.' + model_class_name), pk=instance_id)
+  # the following could improve performance, but did not work once... maybe some kind
+  # of cache issue. The taskactions where  not found.
+  #task_actions = TaskAction.objects.select_related().filter(task=t)
+  filt = {model_class_name.lower() : instance}
+  model_actions = get_class('glue.action.' + model_class_name + 'Action').objects.filter(**filt)
+  #print "task id %s: task_actions = %s" % (task_id, task_actions)
+  actionsRequiringParameter = {}
+  for model_action in model_actions:
+    action = get_class(model_action.action.classname)(model_action)
+    for param in action.get_required_parameters():
+      if not param in actionsRequiringParameter:
+        actionsRequiringParameter[param] = []
+      actionsRequiringParameter[param].append(model_action.id);
+
+  return render('glue/show_' + model_class_name.lower() + '.html', {'model': instance, 'model_class': model_class_name, 'model_actions': model_actions, 'actionsRequiringParameter': actionsRequiringParameter}, request)
 
 @login_required
 def create_component(request):
   return create(request, Component, ComponentForm, 'Component')
-
 
 @login_required
 def create_task(request):
@@ -219,9 +215,29 @@ def update_task_action(request):
   response_dict.update({'success': True})
   return HttpResponse(simplejson.dumps(response_dict), mimetype='application/javascript');
 
+@login_required
+def get_component(request):
+  """
+  """
+  response_dict = {}
+  try:
+    model_id = request.GET.get('project_id')
+    model = get_object_or_404(Project, pk=model_id)
+    data = serializers.serialize("json", [model])
+    project = serializers.serialize("json", [model.project])
+
+    response_dict.update({'component': component, 'project': project, 'component_id': task.component.id, 'project_id': task.component.project.id})
+  except Exception as e:
+    print e
+    print "Unexpected error:", sys.exc_info()[0]
+    return HttpResponse(str(e))
+  response_dict.update({'success': True})
+  return HttpResponse(simplejson.dumps(response_dict), mimetype='application/javascript');
 
 @login_required
 def get_task(request):
+  """
+  """
   response_dict = {}
   try:
     task_id = request.GET.get('task_id')
