@@ -43,37 +43,15 @@ def user_dashboard(request):
                 request)
 
 @login_required
-def task(request, task_id):
-  init_actions()
-  t = get_object_or_404(Task, pk=task_id)
-  # the following could improve performance, but did not work once... maybe some kind
-  # of cache issue. The taskactions where  not found.
-  #task_actions = TaskAction.objects.select_related().filter(task=t)
-  task_actions = TaskAction.objects.filter(task=t)
-  print "task id %s: task_actions = %s" % (task_id, task_actions)
-  actionsRequiringParameter = {}
-  for task_action in task_actions:
-    action = get_class(task_action.action.classname)(task_action)
-    for param in action.get_required_parameters():
-      if not param in actionsRequiringParameter:
-        actionsRequiringParameter[param] = []
-      actionsRequiringParameter[param].append(task_action.id);
-
-  return render('glue/show_task.html', {'model': t, 'model_class': 'Task', 'model_actions': task_actions, 'actionsRequiringParameter': actionsRequiringParameter}, request)
-
-@login_required
-def task(request, task_id):
-  return show_model(request, task_id, 'Task')
-
-@login_required
-def show_model(request, instance_id, model_class_name):
+def show_model(request, instance_id, model):
+  model_class_name = model.capitalize()
   init_actions()
   instance = get_object_or_404(get_class('glue.models.' + model_class_name), pk=instance_id)
   # the following could improve performance, but did not work once... maybe some kind
   # of cache issue. The taskactions where  not found.
   #task_actions = TaskAction.objects.select_related().filter(task=t)
   filt = {model_class_name.lower() : instance}
-  model_actions = get_class('glue.action.' + model_class_name + 'Action').objects.filter(**filt)
+  model_actions = get_class('glue.models.' + model_class_name + 'Action').objects.filter(**filt)
   #print "task id %s: task_actions = %s" % (task_id, task_actions)
   actionsRequiringParameter = {}
   for model_action in model_actions:
@@ -83,42 +61,50 @@ def show_model(request, instance_id, model_class_name):
         actionsRequiringParameter[param] = []
       actionsRequiringParameter[param].append(model_action.id);
 
-  return render('glue/show_' + model_class_name.lower() + '.html', {'model': instance, 'model_class': model_class_name, 'model_actions': model_actions, 'actionsRequiringParameter': actionsRequiringParameter}, request)
+  return render('glue/show_model.html', {'model': instance, 'model_class': model_class_name, 'model_actions': model_actions, 'actionsRequiringParameter': actionsRequiringParameter}, request)
 
 @login_required
-def create_component(request):
-  return create(request, Component, ComponentForm, 'Component')
-
-@login_required
-def create_task(request):
+def create_model(request, modelType):
   """
-  Create or edit a task model instance.
+  Creates or edits a model instance. Adds task actions if a task is created.
+  request -- the http request
+  modelType -- name of the model in lower case like 'task'
   """
-  def create_actions(task):
+  #post_save_method=None
+  print "Model type: '%s'" % modelType
+  #if modelType == 'task':
+  def create_actions(model):
     """
     Creates a TaskAction instance for all actions and relates it to the task.
     """
     init_actions()
-    for action in Action.objects.all():
-      print "Creating TaskAction for task %s and action %s" % (task,action)
-      new_taskaction = TaskAction(action=action, task=task)
+    for action in Action.objects.filter(model_name=modelType):
+      print "Creating TaskAction for %s %s and action %s" % (modelType, model,action)
+      filt = {'action': action, modelType : model}
+      model_action_class = get_class('glue.models.' + modelType.capitalize() + 'Action')
+      new_taskaction = model_action_class(**filt)
       new_taskaction.save()
-  return create(request, Task, TaskForm, 'Task', create_actions)
+  print "Setting create_actions as post_save_method"
+  post_save_method = create_actions
+      
+  return generic_create_model(request, modelType, post_save_method)
 
 @login_required
-def create(request, model_class, form_class, modelType, post_save_method=None):
+def generic_create_model(request, modelType, post_save_method=None):
   """
   Create or edit a model instance
   When the method is GET, then a form is shown, to either create or edit (if id is passed) the instance.
   When the method is POST, then we receive the results of the form and either update the model instance (if id is set) or create a new model instance.
   The GET or POST parameter "next" can be set to a template, that should be rendered.
   request -- The http request
-  model_class -- The class (like model.Task)
-  form_class -- The class of the form (like TaskForm)
-  modelType -- The name of the model (like 'Task')
+  modelType -- name of the model, lower case ('task')
   post_save_method -- A method called after the model instance is saved, taking the model
                       instance as parameter.
   """
+  full_model_name = 'glue.models.' + modelType.capitalize()
+  model_class = get_class(full_model_name)
+  #form_class -- The class of the form (like TaskForm)
+  form_class = get_class('glue.views.' + modelType.capitalize() + 'Form')
   if request.method == 'GET':
     # Show form
     id = request.GET.get('id')
@@ -135,7 +121,7 @@ def create(request, model_class, form_class, modelType, post_save_method=None):
       model.user = request.user
       form = form_class(instance=model) # An unbound form
       form.user = request.user
-      form.modelType = modelType
+      form.modelType = modelType.capitalize()
     return render('glue/create_model.html', {'form': form}, request)
 
   elif request.method == 'POST': # If the form has been submitted...
@@ -168,20 +154,39 @@ def create(request, model_class, form_class, modelType, post_save_method=None):
       print "The form is not valid"
       return render('glue/create_model.html', {'form': form}, request)
 
-@login_required
-def create_project(request):
-  return create(request, Project, ProjectForm, 'Project')
+#@login_required
+#def do_action(request):
+#  print "do_action"
+#  response_dict = {}
+#  try:
+#    task_action_id = request.GET.get('task_action_id')
+#    print "Searching action"
+#    task_action = get_object_or_404(TaskAction, pk=task_action_id)
+#    print "Creating manager"
+#    manager = ActionManager([task_action])
+#    print "Executing manager"
+#    action_results = manager.execute()
+#    print "Printing results"
+#    print str(action_results)
+#  except Exception as e:
+#    print e
+#    print "Unexpected error:", sys.exc_info()[0]
+#    return HttpResponse(str(e))
+#  response_dict.update({'success': True})
+#  return HttpResponse(simplejson.dumps(response_dict), mimetype='application/javascript');
 
 @login_required
 def do_action(request):
   print "do_action"
   response_dict = {}
   try:
-    task_action_id = request.GET.get('task_action_id')
+    model_action_id = request.GET.get('model_action_id')
+    model_class_name = request.GET.get('model_class').capitalize()
+    model_action_class = get_class('glue.models.' + model_class_name + 'Action')
     print "Searching action"
-    task_action = get_object_or_404(TaskAction, pk=task_action_id)
+    model_action = get_object_or_404(model_action_class, pk=model_action_id)
     print "Creating manager"
-    manager = ActionManager([task_action])
+    manager = ActionManager([model_action])
     print "Executing manager"
     action_results = manager.execute()
     print "Printing results"
@@ -194,19 +199,43 @@ def do_action(request):
   return HttpResponse(simplejson.dumps(response_dict), mimetype='application/javascript');
 
 
+#@login_required
+#def update_task_action(request):
+#  response_dict = {}
+#  try:
+#    task_action_id = request.GET.get('task_action_id')
+#    enabled = request.GET.get('enabled') == "true"
+#    finished = request.GET.get('finished') == "true"
+#    print "%s,%s,%s" % (task_action_id, enabled, finished)
+#
+#    task_action = get_object_or_404(TaskAction, pk=task_action_id)
+#    task_action.enabled = enabled
+#    task_action.finished = finished
+#    task_action.save()
+#  
+#  except Exception as e:
+#    print e
+#    print "Unexpected error:", sys.exc_info()[0]
+#    return HttpResponse(str(e))
+#  response_dict.update({'success': True})
+#  return HttpResponse(simplejson.dumps(response_dict), mimetype='application/javascript');
+
 @login_required
-def update_task_action(request):
+def update_model_action(request):
   response_dict = {}
   try:
-    task_action_id = request.GET.get('task_action_id')
+    model_action_id = request.GET.get('model_action_id')
+    model_class_name = request.GET.get('model_class').capitalize()
     enabled = request.GET.get('enabled') == "true"
     finished = request.GET.get('finished') == "true"
-    print "%s,%s,%s" % (task_action_id, enabled, finished)
-
-    task_action = get_object_or_404(TaskAction, pk=task_action_id)
-    task_action.enabled = enabled
-    task_action.finished = finished
-    task_action.save()
+    print "%s,%s,%s" % (model_action_id, enabled, finished)
+    
+    print "Getting class %s" % model_class_name + 'Action' 
+    model_action_class = get_class('glue.models.' + model_class_name + 'Action')
+    model_action = get_object_or_404(model_action_class, pk=model_action_id)
+    model_action.enabled = enabled
+    model_action.finished = finished
+    model_action.save()
   
   except Exception as e:
     print e
@@ -221,12 +250,12 @@ def get_component(request):
   """
   response_dict = {}
   try:
-    model_id = request.GET.get('project_id')
-    model = get_object_or_404(Project, pk=model_id)
-    data = serializers.serialize("json", [model])
+    model_id = request.GET.get('instance_id')
+    model = get_object_or_404(Component, pk=model_id)
+    json_model = serializers.serialize("json", [model])
     project = serializers.serialize("json", [model.project])
 
-    response_dict.update({'component': component, 'project': project, 'component_id': task.component.id, 'project_id': task.component.project.id})
+    response_dict.update({'component': json_model, 'project': project, 'component_id': model.id, 'project_id': model.project.id})
   except Exception as e:
     print e
     print "Unexpected error:", sys.exc_info()[0]
@@ -240,7 +269,7 @@ def get_task(request):
   """
   response_dict = {}
   try:
-    task_id = request.GET.get('task_id')
+    task_id = request.GET.get('instance_id')
     task = get_object_or_404(Task, pk=task_id)
     data = serializers.serialize("json", [task])
     component = serializers.serialize("json", [task.component])

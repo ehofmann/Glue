@@ -93,10 +93,10 @@
    * required parameters.
    * @param task_id The id of the task.
    */ 
-	function updateParameters(task_id)
+	function updateParameters(instance_id)
 	{
 		$.get("/glue/get_{{model_class|lower}}/", {
-			'task_id': task_id, 
+			'instance_id': instance_id, 
 			}, 
 			function(data) {
 		       		// format and output result
@@ -262,6 +262,7 @@
 		finished = $(finishedName).attr("checked");
 		$.get("/glue/update_model_action", {
 			'model_action_id': model_action_id, 
+      'model_class': '{{model_class|lower}}',
 			'enabled': enabled, 
 			'finished': finished
 			}, 
@@ -288,6 +289,7 @@
 	{
 		$.get("/glue/do_action/", {
 			'model_action_id': model_action_id, 
+      'model_class': '{{model_class|lower}}',
 			}, 
 			function(data) {
 		       		// format and output result

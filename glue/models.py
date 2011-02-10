@@ -57,32 +57,32 @@ class Task(models.Model):
         return [(field, field.value_to_string(self)) for field in Task._meta.fields]
 
 
-#class Parameter(models.Model):
-#    name = models.CharField(max_length=30, unique=True)
-#
-#    def __unicode__(self):
-#        return self.name     
-
 class Action(models.Model):
     classname = models.CharField(max_length=50)
     name = models.CharField(max_length=20)
     description = models.CharField(max_length=50)
-    #required_parameters = models.ManyToManyField(Parameter, related_name="required_parameters_relation")
-    #provided_parameters = models.ManyToManyField(Parameter, related_name="provided_parameters_relation")
+    model_name = models.CharField(max_length=20, default='task')
 
     def __unicode__(self):           
         return "Action: %s - %s (%s)" % (self.name, self.description, self.classname)
+   
+class ModelAction(models.Model):
+  action = models.ForeignKey(Action)
+  last_execution = models.DateTimeField(null=True)
+  finished = models.BooleanField(default=False)
+  enabled = models.BooleanField(default=True)
+  visible = models.BooleanField(default=True)
+
+  class Meta:
+    abstract = True
     
-class TaskAction(models.Model):
-    action = models.ForeignKey(Action)
+ 
+class TaskAction(ModelAction):
     task = models.ForeignKey(Task)
-    last_execution = models.DateTimeField(null=True)
-    finished = models.BooleanField(default=False)
-    enabled = models.BooleanField(default=True)
-    visible = models.BooleanField(default=True)
-    #before_development = models.BooleanField(default=True)
-    #action_description = models.CharField(max_length=50, default="")
     
     def __unicode__(self):           
         return "%s | %s | Task: %s" % (self.task.description, self.action, self.task)
         
+class ComponentAction(ModelAction):
+    component = models.ForeignKey(Component)
+

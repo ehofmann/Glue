@@ -18,12 +18,14 @@ class Action():
 		 provided_parameters,
 		 name,
 		 description,
+     model_name='task'
 		):
-        self.__model = model
-	self.__required_parameters = required_parameters
-	self.__provided_parameters = provided_parameters
-	self.__name = name
-        self.__description = description
+      self.__model = model
+      self.__required_parameters = required_parameters
+      self.__provided_parameters = provided_parameters
+      self.__name = name
+      self.__description = description
+      self.__model_name = model_name
 
     def get_model(self):
 	return self.__model
@@ -48,20 +50,12 @@ class Action():
         return self.__provided_parameters
     provided_parameters = property(get_provided_parameters)	
 
+    def get_model_name(self):
+        return self.__model_name	
+    model_name = property(get_model_name)	
+
     def execute(self):
 	return [self.__model.action.description]
-
-#class ManualAction(Action):
-#    def __init__(self, model):
-#        Action.__init__(self, model,
-#			[],
-#			[],
-#			"Manual Action",
-#			"Do the task manual")
-#        
-#
-#    def execute(self):
-#	return ["Skipping manual action: %s" % self.model.action_description]
 
     
 class CreateIstComponentVersion(Action): 
@@ -278,10 +272,11 @@ class CreateReleaseNotesText(Action):
 	):
         Action.__init__(self, 
 			model,
-			required_parameters =   ["Component_ist_name", "Component_ist_version"], 
-			provided_parameters =   ["Component_release_notes_text"],
-			name = 			"Release notes text",
-			description = 		"Gets all records from IST, that were corrected in the component version and reads the IST compatibilites and creates a release note.",
+			required_parameters = ["Component_ist_name", "Component_ist_version"], 
+			provided_parameters = ["Component_release_notes_text"],
+			name                = "Release notes text",
+			description         = "Gets all records from IST, that were corrected in the component version and reads the IST compatibilites and creates a release note.",
+      model_name          = 'component'
 			)
 
 class ActionFactory():
@@ -309,41 +304,42 @@ class ActionManager():
 			
 		return results
 
-
-#def get_action_names():
-	#get_action_classes()
-#	return ['glue.action.CreateComponentBrainRequirementAction', 'glue.action.CreateIstComponentVersion']
-
 initialized = False
 
 def init_actions():
-	global initialized
-	if initialized == False:
-		print "init_actions"
-		for name in get_action_class_names():
-			name = "glue.action.%s" % name
-			print "Action: %s" % name
-			
-			try:
-				existing_action = glue.models.Action.objects.get(classname=name)
-				print "Action %s already in db" % name
-				print "action description %s" % existing_action.description
-				a = glue.action.get_class(name)(existing_action)
-				existing_action.description = a.get_description()
-				existing_action.name = a.get_name()
-				existing_action.save()
-			except glue.models.Action.DoesNotExist:
-				print "Creating action: %s" % name
-			        model = ""	
-				a = glue.action.get_class(name)(model)
-				print "action description %s" % a.description
-				new_action = glue.models.Action(	classname=name, 
-								description=a.get_description(), 
-								name=a.get_name())
-				new_action.save()
-				for task in Task.objects.all():
-					new_task_action = TaskAction(action=new_action, task=task)
-					new_task_action.save()
+  global initialized
+  if initialized == False:
+    print "init_actions"
+    for name in get_action_class_names():
+      name = "glue.action.%s" % name
+      print "Action: %s" % name
+
+      try:
+        existing_action = glue.models.Action.objects.get(classname=name)
+        print "Action %s already in db" % name
+        print "action description %s" % existing_action.description
+        a = glue.action.get_class(name)(existing_action)
+        existing_action.description = a.get_description()
+        existing_action.name = a.get_name()
+        existing_action.model_name = a.get_model_name()
+        existing_action.save()
+      except glue.models.Action.DoesNotExist:
+        print "Creating action: %s" % name
+        model = ""	
+        a = glue.action.get_class(name)(model)
+        print "action description %s" % a.description
+        new_action = glue.models.Action(	classname=name, 
+                description=a.get_description(), 
+                name=a.get_name(),
+                model_name = a.get_model_name()
+                )
+        new_action.save()
+        model_class = get_class('glue.models.' + new_action.model_name.capitalize())
+        for instance in model_class.objects.all():
+          params = {'action': new_action, new_action.model_name: instance}
+          model_action_class = get_class('glue.models.' + new_action.model_name.capitalize() + 'Action')
+          new_task_action = model_action_class(**params)
+          new_task_action.save()
 	initialized = True
 
 		
