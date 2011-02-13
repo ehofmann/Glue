@@ -1,4 +1,4 @@
-import glue
+import glue, time
 from glue.introspection import get_action_class_names
 from glue.models import Task,TaskAction
 
@@ -254,16 +254,19 @@ class BrainRequirementNote(Action):
 			)
 
 class UpdateIstVersionDependencies(Action):
-    def __init__(	self, 
-			model,
-	):
-        Action.__init__(self, 
-			model,
-			required_parameters =   ["Component_ist_version", "Component_ist_name"], 
-			provided_parameters =   [""],
-			name = 			"Compatibilities",
-			description = 		"Updates compatibilites in IST.",
-			)
+  def __init__(	self, 
+    model,
+  ):
+    Action.__init__(self, 
+    model,
+    required_parameters =   ["Component_ist_version", "Component_ist_name"], 
+    provided_parameters =   [""],
+    name = 			"Compatibilities",
+    description = 		"Updates compatibilites in IST.",
+    )
+  def execute(self):
+    time.sleep(10)
+    return [self.get_model().action.description]
 
 
 class CreateReleaseNotesText(Action):

@@ -4,7 +4,11 @@
 <link rel="stylesheet" href="/static/css/datatable.css" />
 <script type="text/javascript" language="javascript" src="/static/js/jquery.dataTables.js"></script>
 <script type="text/javascript" src="/static/js/dataTables.dataSourcePlugins.js"></script>
+<script type="text/javascript" src="/static/js/jquery.busy.min.js"></script>
+
 <script type="text/javascript" charset="utf-8">
+
+
 	/* Create an array with the values of all the checkboxes in a column */
 	$.fn.dataTableExt.afnSortData['dom-checkbox'] = function  ( oSettings, iColumn )
 	{
@@ -34,6 +38,17 @@
 		label = capitaliseFirstLetter(label);	
 		return label;
 	}	
+
+  function addExecuteSpinner()
+  {
+    jQuery().busy("defaults", { img: '/static/images/busy.gif' }); 
+    //jQuery('.action_execute').click(function() 
+    //  { 
+    //    var that = jQuery(this).busy();
+        //setTimeout(function() { that.busy("hide"); }, 2000); 
+    //  }); 
+  }
+
 
   /**
    * Creates an html table from fields (key-value pairs).
@@ -71,15 +86,16 @@
         {
           undefined_parameters += ', '; 
         }
-        undefined_parameters += key; 
+        parameter_display = key.replace(/_/g, ' '); 
+        undefined_parameters += capitaliseFirstLetter(parameter_display);
       }
 		}	
     if (undefined_parameters !== "")
     {
-			  header += "<th>Undefined parameters</th>";
+			  header += '<th width="20%">Undefined parameters</th>';
 			  body += '<td><font color="red">' + undefined_parameters + "</font></td>";
     }
-		table = '<table border="1" ><thead><tr>' + header + '</tr></thead>' +
+		table = '<table border="1" width="1000"><thead><tr>' + header + '</tr></thead>' +
 			'<caption align="left">' + modelType + ' Parameters <a href="/glue/create_' + originalModelType + '/?id=' + id +'&next=/glue/{{model_class|lower}}/{{model.id}}/">edit</a>' +'</caption>' +
 			'<tbody><tr>' + body + 
 					'</tr></tbody></table>' +
@@ -212,21 +228,16 @@
 			$("#finishedCheckbox" + {{model_action.id}}).click(function(event){
 				event.preventDefault();		
    			});
-			jQuery("execute{{model_action.id}}").click(function() { var that = jQuery(this).busy(); setTimeout(function() { that.busy("hide"); }, 2000); }); 
+			//jQuery("execute{{model_action.id}}").click(function() { var that = jQuery(this).busy(); setTimeout(function() { that.busy("hide"); }, 2000); }); 
+      
 			
 		{% endfor %}
-
-
 
 		$("#executeAll").click(function(event){
 			event.preventDefault();		
 		});
 		
-
-		// Need to update the tasks, to disable/enable the checkboxes and
-		// buttons.
-		//handleRequiredParameters();
-		
+    addExecuteSpinner();
 	});
 
 
@@ -248,8 +259,6 @@
 			$(executeName).removeAttr('disabled');
 		else
 			$(executeName).attr('disabled', 'disabled');
-			
-
 	};
 
 
@@ -260,6 +269,9 @@
 		executeName = "#execute" + model_action_id;
 		enabled = $(enabledName).attr("checked");
 		finished = $(finishedName).attr("checked");
+    var executeBusy = $('#execute' + model_action_id).busy();
+    var enabledBusy = $(enabledName).busy();
+    var finishedBusy = $(finishedName).busy();
 		$.get("/glue/update_model_action", {
 			'model_action_id': model_action_id, 
       'model_class': '{{model_class|lower}}',
@@ -279,6 +291,9 @@
 				{
 					alert("Error: Could not update the server with the change.");
 				} 
+        executeBusy.busy("hide");
+        enabledBusy.busy("hide");
+        finishedBusy.busy("hide");
 			}
 		);
 	};
@@ -287,6 +302,9 @@
 
 	function execute(model_action_id)
 	{
+    var executeBusy = $('#execute' + model_action_id).busy();
+    var enabledBusy = $('#enabledCheckbox' + model_action_id).busy();
+    var finishedBusy = $('#finishedCheckbox' + model_action_id).busy();
 		$.get("/glue/do_action/", {
 			'model_action_id': model_action_id, 
       'model_class': '{{model_class|lower}}',
@@ -306,7 +324,9 @@
 				{
 					alert("Error: Action did not complete successful.");
 				}
-				 
+        executeBusy.busy("hide");
+        enabledBusy.busy("hide");
+        finishedBusy.busy("hide");
 			}
 		);
 		
@@ -336,7 +356,7 @@
 	
    {% for model_action in model_actions %}
 	<div id="action{{model_action.id}}">
-		<tr width="1000">
+		<tr>
 			<td>{{model_action.action.name}}</td>
 			<td>{{model_action.action.description}}</td>
 			<td>
@@ -357,7 +377,7 @@
 			onclick="updateActionState({{model_action.id}});"
 			/> </td>
 			<td>
-				<button onclick="execute({{model_action.id}});" id="execute{{model_action.id}}"> execute </button>
+				<button class="action_execute" onclick="execute({{model_action.id}});" id="execute{{model_action.id}}"> execute </button>
 			</td>
 			<td style="color: red;" id="missing_parameters{{model_action.id}}">
 			</td>

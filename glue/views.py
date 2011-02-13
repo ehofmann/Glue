@@ -196,6 +196,8 @@ def do_action(request):
     print "Unexpected error:", sys.exc_info()[0]
     return HttpResponse(str(e))
   response_dict.update({'success': True})
+  model_action.finished = True;
+  model_action.save()
   return HttpResponse(simplejson.dumps(response_dict), mimetype='application/javascript');
 
 
