@@ -5,9 +5,7 @@
 <script type="text/javascript" language="javascript" src="/static/js/jquery.dataTables.js"></script>
 <script type="text/javascript" src="/static/js/dataTables.dataSourcePlugins.js"></script>
 <script type="text/javascript" src="/static/js/jquery.busy.min.js"></script>
-
 <script type="text/javascript" charset="utf-8">
-
 
 	/* Create an array with the values of all the checkboxes in a column */
 	$.fn.dataTableExt.afnSortData['dom-checkbox'] = function  ( oSettings, iColumn )
@@ -38,16 +36,6 @@
 		label = capitaliseFirstLetter(label);	
 		return label;
 	}	
-
-  function addExecuteSpinner()
-  {
-    jQuery().busy("defaults", { img: '/static/images/busy.gif' }); 
-    //jQuery('.action_execute').click(function() 
-    //  { 
-    //    var that = jQuery(this).busy();
-        //setTimeout(function() { that.busy("hide"); }, 2000); 
-    //  }); 
-  }
 
 
   /**
@@ -107,15 +95,15 @@
    * Gets all parameters of the django models related to the task from the server
    * and updates the parameters table. Then it updates the actions regarding
    * required parameters.
-   * @param task_id The id of the task.
+   * @param instance_id The id of the task.
    */ 
 	function updateParameters(instance_id)
 	{
+    var busy = $('#refresh_button').busy();
 		$.get("/glue/get_{{model_class|lower}}/", {
 			'instance_id': instance_id, 
 			}, 
 			function(data) {
-		       		// format and output result
 				eval("data=" + data);
 				success = data['success'];
 				if (success)
@@ -143,11 +131,16 @@
 				{
 					alert("Error: Action did not complete successful.");
 				}
+        busy.busy("hide");
 			}
 		);
 	};
 
 
+  /**
+   * Checks if a parameter is valid.
+   * Valid is none empty and not null (NULL in db)
+   */
   function isParameterValid(value)
   {
     return !(value === "" || value == null || value == "None");
@@ -211,7 +204,7 @@
 				{ "sSortDataType": "dom-text" },
 				{ "sSortDataType": "dom-checkbox" },
 				{ "sSortDataType": "dom-checkbox" },
-				null,
+				{ "sSortDataType": "dom-text" },
         null
 			]
 	 	});
@@ -228,8 +221,6 @@
 			$("#finishedCheckbox" + {{model_action.id}}).click(function(event){
 				event.preventDefault();		
    			});
-			//jQuery("execute{{model_action.id}}").click(function() { var that = jQuery(this).busy(); setTimeout(function() { that.busy("hide"); }, 2000); }); 
-      
 			
 		{% endfor %}
 
@@ -237,10 +228,14 @@
 			event.preventDefault();		
 		});
 		
-    addExecuteSpinner();
+    jQuery().busy("defaults", { img: '/static/images/busy.gif' }); 
 	});
-
-
+  
+  /**
+   * Enables/Disables a button associated to a model action.
+   * @param model_action_id Id of the model action
+   * @param enabled True -> enable the button.
+   */
 	function changeExecuteState(model_action_id, enabled)
 	{
 		executeName = "#execute" + model_action_id;
@@ -248,10 +243,13 @@
 			$(executeName).removeAttr('disabled');
 		else
 			$(executeName).attr('disabled', 'disabled');
-			
-
 	};
 	
+  /**
+   * Enables/Disables the finished checkbox.
+   * @param model_action_id Id of the model action
+   * @param enabled True -> enable the button.
+   */
 	function changeFinishedState(model_action_id, enabled)
 	{
 		executeName = "#finishedCheckbox" + model_action_id;
@@ -261,7 +259,10 @@
 			$(executeName).attr('disabled', 'disabled');
 	};
 
-
+  /**
+   * Sends the state of an action to the server to update the db.
+   * @param model_action_id Id of the model action
+   */
 	function updateActionState(model_action_id)
 	{
 		enabledName = "#enabledCheckbox" + model_action_id;
@@ -299,7 +300,10 @@
 	};
 
 
-
+  /**
+   * Execute an action by sending a message to the server.
+   * @param model_action_id Id of the model action
+   */
 	function execute(model_action_id)
 	{
     var executeBusy = $('#execute' + model_action_id).busy();
@@ -340,7 +344,7 @@
 <div id="parameters">
 	Parameters
 </div>
-<button onClick=updateParameters({{model.id}})>refresh</button>
+<button id="refresh_button" onClick=updateParameters({{model.id}})>refresh</button>
 <br/>
 <br/>
 <table id="action_table" width="1000">
@@ -350,8 +354,8 @@
 			<th> Description </th>
 			<th> Enabled? </th>
 			<th> Finished? </th>
-			<th> Execute</th>
 			<th> Missing parameters </th>
+			<th> Execute</th>
 	</thead>
 	
    {% for model_action in model_actions %}
@@ -376,10 +380,10 @@
 			{% endif %}
 			onclick="updateActionState({{model_action.id}});"
 			/> </td>
+			<td style="color: red;" id="missing_parameters{{model_action.id}}">
+			</td>
 			<td>
 				<button class="action_execute" onclick="execute({{model_action.id}});" id="execute{{model_action.id}}"> execute </button>
-			</td>
-			<td style="color: red;" id="missing_parameters{{model_action.id}}">
 			</td>
 		</tr>
 	</div>
