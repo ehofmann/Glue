@@ -16,6 +16,16 @@
 		} );
 		return aData;
 	}
+	
+	$.fn.dataTableExt.afnSortData['missing-parameter'] = function  ( oSettings, iColumn )
+	{
+		var aData = [];
+		$( 'td:eq('+iColumn+')', oSettings.oApi._fnGetTrNodes(oSettings) ).each( function () {
+      var missingParameters = $('#' + this.id).text();
+			aData.push( missingParameters.length );
+		} );
+		return aData;
+	}
 
 	/**
 	 * Returns the string, with the first letter uppercase
@@ -49,7 +59,6 @@
    * @param originalModelType The django model type (but lower case), 
    * for example task, component or project.
    * @param id The id of the model instance.
-   * @param mainModelType the type of the model, for which this whole page is shown.
    */
 	function getParameterTable(fields, originalModelType, id)
 	{
@@ -204,8 +213,8 @@
 				{ "sSortDataType": "dom-text" },
 				{ "sSortDataType": "dom-checkbox" },
 				{ "sSortDataType": "dom-checkbox" },
-				{ "sSortDataType": "dom-text" },
-        null
+				{ "sSortDataType": "missing-parameter" },
+				{ "sSortDataType": "dom-button" },
 			]
 	 	});
 			
@@ -227,7 +236,8 @@
 		$("#executeAll").click(function(event){
 			event.preventDefault();		
 		});
-		
+	
+    // set the spinner image	
     jQuery().busy("defaults", { img: '/static/images/busy.gif' }); 
 	});
   
@@ -238,8 +248,10 @@
    */
 	function changeExecuteState(model_action_id, enabled)
 	{
+		var missingParameters = $("#missing_parameters" + model_action_id).text();
+    var hasMissingParameters = missingParameters != "";
 		executeName = "#execute" + model_action_id;
-		if(enabled)
+		if(enabled && !hasMissingParameters)
 			$(executeName).removeAttr('disabled');
 		else
 			$(executeName).attr('disabled', 'disabled');
@@ -358,9 +370,10 @@
 			<th> Execute</th>
 	</thead>
 	
+  <tbody>
    {% for model_action in model_actions %}
-	<div id="action{{model_action.id}}">
-		<tr>
+	<!--div id="action{{model_action.id}}"-->	
+    <tr>
 			<td>{{model_action.action.name}}</td>
 			<td>{{model_action.action.description}}</td>
 			<td>
@@ -386,8 +399,9 @@
 				<button class="action_execute" onclick="execute({{model_action.id}});" id="execute{{model_action.id}}"> execute </button>
 			</td>
 		</tr>
-	</div>
+	<!--/div-->
   {% endfor %}
+  </tbody>
 </table>
 
 {% endblock %}
