@@ -18,7 +18,8 @@ class Action():
 		 provided_parameters,
 		 name,
 		 description,
-     model_name='task'
+     model_name='task',
+     is_manual = True,
 		):
       self.__model = model
       self.__required_parameters = required_parameters
@@ -26,6 +27,7 @@ class Action():
       self.__name = name
       self.__description = description
       self.__model_name = model_name
+      self.__is_manual = is_manual
 
     def get_model(self):
 	return self.__model
@@ -57,6 +59,12 @@ class Action():
     def execute(self):
 	return [self.__model.action.description]
 
+    def is_manual(self):
+      return self.__is_manual
+
+"""
+Component tasks
+"""
     
 class CreateIstComponentVersion(Action): 
     def __init__(	self, 
@@ -68,6 +76,7 @@ class CreateIstComponentVersion(Action):
 			[],
 			"IST version",
 			"Creates the IST component version, if it does not exist yet",
+      model_name='component',
 			)
 
 class CreateParamDbVersion(Action): 
@@ -79,7 +88,8 @@ class CreateParamDbVersion(Action):
 			["Component_ist_version", "Component_previous_ist_version"], 
 			[],
 			"IST version",
-			"Creates the IST component version, if it does not exist yet",
+			"Creates the Param db version, if it does not exist yet",
+      model_name='component',
 			)
 
 class UpdateReleaseListVersion(Action): 
@@ -92,6 +102,7 @@ class UpdateReleaseListVersion(Action):
 			[],
 			"Release list version",
 			"Updates the release list with the component version",
+      model_name='component',
 			)
 
 class UpdateReleaseListSrsVersion(Action): 
@@ -104,6 +115,7 @@ class UpdateReleaseListSrsVersion(Action):
 			[],
 			"Release list SRS version",
 			"Updates the release list with the component SRS version",
+      model_name='component',
 			)
 
 class CreateBrainComponentVersion(Action): 
@@ -116,9 +128,130 @@ class CreateBrainComponentVersion(Action):
 			["Component_version_brain_baseline"],
 			"Brain component version baseline",
 			"Creates the brain component version baseline, if it does not exist yet",
+      model_name='component',
 			)
 
-class CreateComponentBrainRequirementAction(Action): 
+
+
+class CreateNewSrs(Action):
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Component_srs_path", "Component_new_srs_name"], 
+			[],
+			"Create New SRS",
+			"Creates a new SRS file from the previous version and updates the properties. Adds a history etnrtry with the differences of current and previous component version in brain.",
+      model_name='component',
+			)
+
+class SendSrsForReview(Action):
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Component_srs_path", "Component_new_srs_name"], 
+			[],
+			"SRS PI review",
+			"Send the SRS for review to PI.",
+      model_name='component',
+			)
+
+class CreatePomTaskToCreateComponent(Action):
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Component_ist_name", "Component_ist_version"], 
+			["Component_pom_task_id"],
+			"POM task to create component",
+			"POM task to create component",
+      model_name='component',
+			)
+
+class CreateTag(Action):
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Component_ist_name", "Component_ist_version"], 
+			["Component_tag"],
+			"Create Tag",
+			"Tags the component version in perforce",
+      model_name='component',
+			)
+
+class ComponentWorkloadFinalized(Action):
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			[], 
+			["Component_workload"],
+			"Finalize component workload",
+			"Finalize the workload related to the component creation",
+      model_name='component',
+			)
+
+class CreateIstPackage(Action):
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			required_parameters = ["Component_ist_name", "Component_ist_version", "Component_previous_ist_version"], 
+			provided_parameters = ["ist_package_id"],
+			name                = "Create IST package",
+			description         = "Creates the package of the version in IST, updates the release notes, the package file link and the compabilities.",
+      model_name          = 'component'
+			)
+
+#class UpdateSrsBaseline(Action):
+#    def __init__(	self, 
+#			model,
+#	):
+#        Action.__init__(self, 
+#			model,
+#			["Component_version_brain_baseline", "Component_release_notes_path", "Component_new_srs_name"], 
+#			[],
+#			"Update SRS baseline",
+#			"Updates all baseline references to the new component baseline.",
+#			)
+
+#class UpdateSrsHistory(Action):
+#    def __init__(	self, 
+#			model,
+#	):
+#        Action.__init__(self, 
+#			model,
+#			["Component_version_brain_baseline", "Component_release_notes_path", "Component_new_srs_name"], 
+#			[],
+#			"Update SRS history",
+#			"Updates the SRS history.",
+#			)
+
+"""
+Task actions
+"""
+
+class CreatePomTask(Action):
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Task_cr_number", "Task_cr_description", "Task_cr_synopsis"], 
+			["Task_pom_task_id"],
+			"Create POM task",
+			"Creates a task in POM",
+			)
+
+class CreateComponentBrainRequirement(Action): 
     def __init__(	self, 
 			model,
 	):
@@ -133,7 +266,6 @@ class CreateComponentBrainRequirementAction(Action):
     def execute(self):
 	return ["Creating component brain requirement from module brain requirement: %s" % self.model.action.description]
 
-
 class CreateCrFromRequirement(Action): 
     def __init__(	self, 
 			model,
@@ -145,6 +277,20 @@ class CreateCrFromRequirement(Action):
 			"Create Cr",
 			"Creates a CR targetting the ist version of the component. If the cr synopsis or description is not available yet, then they are copied from the requirement, if it exists.",
 			)
+
+class AddRequirementToSRS(Action):
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			["Task_brain_requirement"], 
+			[],
+			"Add requirement to SRS",
+			"Adds the requirement to the SRS.",
+			)
+
+
 class PullIstRecordData(Action): 
     def __init__(	self, 
 			model,
@@ -155,42 +301,6 @@ class PullIstRecordData(Action):
 			["Task_cr_description", "Task_cr_synopsis"],
 			"Pull CR/PR data",
 			"Retrieves the CR/PR description and synopsis from ist",
-			)
-
-class CreateNewSrs(Action):
-    def __init__(	self, 
-			model,
-	):
-        Action.__init__(self, 
-			model,
-			["Component_srs_version", "Component_release_notes_path", "Component_new_srs_name"], 
-			[],
-			"Create New SRS",
-			"Creates a new SRS file from the previous version and updates the properties.",
-			)
-
-class UpdateSrsBaseline(Action):
-    def __init__(	self, 
-			model,
-	):
-        Action.__init__(self, 
-			model,
-			["Component_version_brain_baseline", "Component_release_notes_path", "Component_new_srs_name"], 
-			[],
-			"Update SRS baseline",
-			"Updates all baseline references to the new component baseline.",
-			)
-
-class UpdateSrsHistory(Action):
-    def __init__(	self, 
-			model,
-	):
-        Action.__init__(self, 
-			model,
-			["Component_version_brain_baseline", "Component_release_notes_path", "Component_new_srs_name"], 
-			[],
-			"Update SRS history",
-			"Updates the SRS history.",
 			)
 
 class FinishIstRecord(Action): 
@@ -205,17 +315,6 @@ class FinishIstRecord(Action):
 			"Adds the changelists to the CR/PR response. Sets version to corrected.",
 			)
 
-class CreatePomTask(Action):
-    def __init__(	self, 
-			model,
-	):
-        Action.__init__(self, 
-			model,
-			["Task_cr_number", "Task_cr_description", "Task_cr_synopsis"], 
-			["Task_pom_task_id"],
-			"Create POM task",
-			"Creates a task in POM",
-			)
 
 class FinishPomTask(Action):
     def __init__(	self, 
@@ -253,34 +352,30 @@ class BrainRequirementNote(Action):
 			description = 		"Updates the brain requirement's node with the CR number",
 			)
 
-class UpdateIstVersionDependencies(Action):
-  def __init__(	self, 
-    model,
-  ):
-    Action.__init__(self, 
-    model,
-    required_parameters =   ["Component_ist_version", "Component_ist_name"], 
-    provided_parameters =   [""],
-    name = 			"Compatibilities",
-    description = 		"Updates compatibilites in IST.",
-    )
-  def execute(self):
-    time.sleep(10)
-    return [self.get_model().action.description]
-
-
-class CreateReleaseNotesText(Action):
+class CreateReviewRequest(Action):
     def __init__(	self, 
 			model,
 	):
         Action.__init__(self, 
 			model,
-			required_parameters = ["Component_ist_name", "Component_ist_version"], 
-			provided_parameters = ["Component_release_notes_text"],
-			name                = "Release notes text",
-			description         = "Gets all records from IST, that were corrected in the component version and reads the IST compatibilites and creates a release note.",
-      model_name          = 'component'
+			required_parameters =   ["Task_perforce_changelist", "Task_cr_number", "Task_test_description"], 
+			provided_parameters =   ["Task_reviewboard_request_id"],
+			name = 			"Create review request",
+			description = 		"Creates a reviewboard request from the changelist",
 			)
+
+class ReviewFinished(Action):
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			required_parameters =   ["Task_reviewboard_request_id"], 
+			provided_parameters =   [""],
+			name = 			"Review Finished",
+			description = 		"Indicates that the review has been finished and the ship it, has been granted.",
+			)
+
 
 class ActionFactory():
         
@@ -325,6 +420,7 @@ def init_actions():
         existing_action.description = a.get_description()
         existing_action.name = a.get_name()
         existing_action.model_name = a.get_model_name()
+        existing_action.manual = a.is_manual()
         existing_action.save()
       except glue.models.Action.DoesNotExist:
         print "Creating action: %s" % name

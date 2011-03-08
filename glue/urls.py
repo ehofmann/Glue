@@ -9,4 +9,5 @@ urlpatterns = patterns('glue.views',
     (r'^update_model_action/$', 'update_model_action'),
     (r'^get_task/$', 'get_task'),
     (r'^get_component/$', 'get_component'),
+    (r'^delete_task/$', 'delete_task'),
 )
