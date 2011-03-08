@@ -50,7 +50,7 @@ def show_model(request, instance_id, model):
   # the following could improve performance, but did not work once... maybe some kind
   # of cache issue. The taskactions where  not found.
   #task_actions = TaskAction.objects.select_related().filter(task=t)
-  filt = {model_class_name.lower() : instance}
+  filt = {str(model_class_name.lower()) : instance}
   model_actions = get_class('glue.models.' + model_class_name + 'Action').objects.filter(**filt)
   #print "task id %s: task_actions = %s" % (task_id, task_actions)
   actionsRequiringParameter = {}
@@ -88,7 +88,7 @@ def create_model(request, modelType):
     for action in Action.objects.filter(model_name=modelType):
       print "Creating TaskAction for %s %s and action %s" % (modelType, model,action)
       nr += 1;
-      filt = {'action': action, modelType : model, 'nr' : nr}
+      filt = {'action': action, str(modelType) : model, 'nr' : nr}
       model_action_class = get_class('glue.models.' + modelType.capitalize() + 'Action')
       new_taskaction = model_action_class(**filt)
       new_taskaction.save()
