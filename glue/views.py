@@ -50,18 +50,24 @@ def show_model(request, instance_id, model):
   # the following could improve performance, but did not work once... maybe some kind
   # of cache issue. The taskactions where  not found.
   #task_actions = TaskAction.objects.select_related().filter(task=t)
-  filt = {model_class_name.lower() : instance}
+  filt = {str(model_class_name.lower()) : instance}
   model_actions = get_class('glue.models.' + model_class_name + 'Action').objects.filter(**filt)
   #print "task id %s: task_actions = %s" % (task_id, task_actions)
   actionsRequiringParameter = {}
+  model_action_id_numbers_map = {}
+  i = 0
+  for model_action in model_actions:
+    model_action_id_numbers_map[model_action.id] = i
+    i += 1
+  
   for model_action in model_actions:
     action = get_class(model_action.action.classname)(model_action)
     for param in action.get_required_parameters():
       if not param in actionsRequiringParameter:
         actionsRequiringParameter[param] = []
       actionsRequiringParameter[param].append(model_action.id);
-
-  return render('glue/show_model.html', {'model': instance, 'model_class': model_class_name, 'model_actions': model_actions, 'actionsRequiringParameter': actionsRequiringParameter}, request)
+  
+  return render('glue/show_model.html', {'model': instance, 'model_class': model_class_name, 'model_actions': model_actions, 'actionsRequiringParameter': actionsRequiringParameter, 'model_action_id_numbers_map': model_action_id_numbers_map}, request)
 
 @login_required
 def create_model(request, modelType):
@@ -78,9 +84,11 @@ def create_model(request, modelType):
     Creates a TaskAction instance for all actions and relates it to the task.
     """
     init_actions()
+    nr = 0;
     for action in Action.objects.filter(model_name=modelType):
       print "Creating TaskAction for %s %s and action %s" % (modelType, model,action)
-      filt = {'action': action, modelType : model}
+      nr += 1;
+      filt = {'action': action, str(modelType) : model, 'nr' : nr}
       model_action_class = get_class('glue.models.' + modelType.capitalize() + 'Action')
             
       new_taskaction = model_action_class(**filt)
@@ -288,4 +296,23 @@ def get_task(request):
     return HttpResponse(str(e))
   response_dict.update({'success': True})
   return HttpResponse(simplejson.dumps(response_dict), mimetype='application/javascript');
+
+  
+@login_required
+def delete_task(request):
+  """
+  Mark a task as deleted. The task will actually not be physically removed.
+  """
+  #response_dict = {}
+  try:
+    task_id = request.GET.get('instance_id')
+    task = get_object_or_404(Task, pk=task_id)
+    task.deleted = True
+    task.save()
+  except Exception as e:
+    print e
+    print "Unexpected error:", sys.exc_info()[0]
+    return HttpResponse(str(e))
+  #response_dict.update({'success': True})
+  return HttpResponseRedirect('/glue/dashboard/') # Redirect after POST
 

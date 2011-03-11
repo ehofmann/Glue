@@ -26,6 +26,20 @@
 		} );
 		return aData;
 	}
+	
+  $.fn.dataTableExt.afnSortData['number'] = function  ( oSettings, iColumn )
+	{
+		var aData = [];
+    var i = 0;
+		$( 'td:eq('+iColumn+')', oSettings.oApi._fnGetTrNodes(oSettings) ).each( function () {
+      i++;
+      //var text = $('#' + this.id).text();
+      //alert(this);
+      
+			aData.push( i );
+		} );
+		return aData;
+	}
 
 	/**
 	 * Returns the string, with the first letter uppercase
@@ -208,7 +222,15 @@
 			"bSort": true,
 			"bInfo": false,
 			"bAutoWidth": false,
+      /*"fnInitComplete": function ( oSettings ) {
+        for ( var i=0, iLen=oSettings.aiDisplay.length ; i<iLen ; i++ )
+        {
+        $('td:eq(0)', oSettings.aoData[ oSettings.aiDisplay[i] ].nTr ).html( i+1 );
+        }
+      },*/
+
 			"aoColumns": [
+				{ "sSortDataType": null },
 				{ "sSortDataType": "dom-text" },
 				{ "sSortDataType": "dom-text" },
 				{ "sSortDataType": "dom-checkbox" },
@@ -347,6 +369,7 @@
 		);
 		
 	};
+
 </script>
 {% endblock %}
 
@@ -362,6 +385,7 @@
 <table id="action_table" width="1000">
 	<thead>
 		<tr>
+      <th> Nr </th>
 			<th> Action </th>
 			<th> Description </th>
 			<th> Enabled? </th>
@@ -370,10 +394,10 @@
 			<th> Execute</th>
 	</thead>
 	
-  <tbody>
+  <tbody id="action_table_body">
    {% for model_action in model_actions %}
-	<!--div id="action{{model_action.id}}"-->	
     <tr>
+      <td>{{model_action.nr}}</td>
 			<td>{{model_action.action.name}}</td>
 			<td>{{model_action.action.description}}</td>
 			<td>
@@ -396,10 +420,11 @@
 			<td style="color: red;" id="missing_parameters{{model_action.id}}">
 			</td>
 			<td>
+        {% if not model_action.manual %}
 				<button class="action_execute" onclick="execute({{model_action.id}});" id="execute{{model_action.id}}"> execute </button>
+        {% endif %}
 			</td>
 		</tr>
-	<!--/div-->
   {% endfor %}
   </tbody>
 </table>
