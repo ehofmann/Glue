@@ -78,8 +78,8 @@ class CreateParamDbVersion(Action):
 			model,
 			["Component_ist_version", "Component_previous_ist_version"], 
 			[],
-			"IST version",
-			"Creates the IST component version, if it does not exist yet",
+			"Param Db",
+			"Creates the Param Db version, if it does not exist yet",
 			)
 
 class UpdateReleaseListVersion(Action): 

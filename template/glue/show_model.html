@@ -93,7 +93,7 @@
 			  body += '<td><font color="red">' + undefined_parameters + "</font></td>";
     }
 		table = '<table border="1" width="1000"><thead><tr>' + header + '</tr></thead>' +
-			'<caption align="left">' + modelType + ' Parameters <a href="/glue/create_' + originalModelType + '/?id=' + id +'&next=/glue/{{model_class|lower}}/{{model.id}}/">edit</a>' +'</caption>' +
+			'<caption align="left">' + modelType + ' Parameters <a href="/glue/create_' + originalModelType + '/?id=' + id +'&next=/glue/show_model/{{model_class|lower}}/{{model.id}}/">edit</a>' +'</caption>' +
 			'<tbody><tr>' + body + 
 					'</tr></tbody></table>' +
 					'<br/>';

@@ -47,8 +47,7 @@
 			<tr>
 				<td><a href="/glue/show_model/task/{{ task.id }}">{{ task.description }}</a></td>
 				<td><a href="/glue/show_model/component/{{ task.component.id }}">{{ task.component.ist_name }} - {{ task.component.ist_version }}</a></td>
-				<td><a href="/glue/create_component/?id={{ task.component.id }}">{{ task.component.ist_name }} - {{ task.component.ist_version }}</a></td>
-				<td><a href="/glue/create_project/?id={{ task.component.project.id }}">{{ task.component.project.name }}</a></td>
+				<td><a href="/glue/show_model/project/{{ task.component.project.id }}">{{ task.component.project.name }}</a></td>
 			</tr>
 			{% endfor %}
 		</tbody>

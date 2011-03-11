@@ -82,6 +82,7 @@ def create_model(request, modelType):
       print "Creating TaskAction for %s %s and action %s" % (modelType, model,action)
       filt = {'action': action, modelType : model}
       model_action_class = get_class('glue.models.' + modelType.capitalize() + 'Action')
+            
       new_taskaction = model_action_class(**filt)
       new_taskaction.save()
   print "Setting create_actions as post_save_method"
@@ -130,9 +131,11 @@ def generic_create_model(request, modelType, post_save_method=None):
     # if there is an id parameter then get the corresponding model instance
     # otherwise create a new model instance
     id = request.POST.get('id')
+    object_alread_exists = False
     if id == '':
       model = model_class();
     else:
+      object_alread_exists = len(model_class.objects.filter(id=id)) > 0  
       model  = model_class.objects.get(id=id)
     
     # check that the POST data is valid and save the model instance
@@ -142,7 +145,7 @@ def generic_create_model(request, modelType, post_save_method=None):
       model = form.save()
       
       # if available then execute the passed method
-      if post_save_method != None:
+      if post_save_method != None and not object_alread_exists:
         post_save_method(model)
 
       # Get the next page/link, from the POST, or redirect to dashboard
