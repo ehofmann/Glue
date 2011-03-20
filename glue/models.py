@@ -82,6 +82,7 @@ class ModelAction(models.Model):
   visible = models.BooleanField(default=True)
   manual = models.BooleanField(default=True)
   nr = models.IntegerField(default=0)
+  comment = models.CharField(default="", max_length=100)
 
   class Meta:
     abstract = True

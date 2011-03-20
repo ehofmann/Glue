@@ -86,12 +86,13 @@ def create_model(request, modelType):
     init_actions()
     nr = 0;
     for action in Action.objects.filter(model_name=modelType):
-      print "Creating TaskAction for %s %s and action %s" % (modelType, model,action)
-      nr += 1;
-      filt = {'action': action, str(modelType) : model, 'nr' : nr}
-      model_action_class = get_class('glue.models.' + modelType.capitalize() + 'Action')
-      new_taskaction = model_action_class(**filt)
-      new_taskaction.save()
+      if action.name != "Free action":
+        print "Creating TaskAction for %s %s and action %s" % (modelType, model,action)
+        nr += 1;
+        filt = {'action': action, str(modelType) : model, 'nr' : nr}
+        model_action_class = get_class('glue.models.' + modelType.capitalize() + 'Action')
+        new_taskaction = model_action_class(**filt)
+        new_taskaction.save()
   print "Setting create_actions as post_save_method"
   post_save_method = create_actions
       

@@ -399,7 +399,13 @@
     <tr>
       <td>{{model_action.nr}}</td>
 			<td>{{model_action.action.name}}</td>
-			<td>{{model_action.action.description}}</td>
+			<td>
+        {% if model_action.action.description %}
+          {{model_action.action.description}}
+        {% else %}
+          {{model_action.action.comment}}
+        {% endif %}
+      </td>
 			<td>
 				<input type="checkbox" 
 					id="enabledCheckbox{{model_action.id}}"
@@ -428,6 +434,5 @@
   {% endfor %}
   </tbody>
 </table>
-
 {% endblock %}
 

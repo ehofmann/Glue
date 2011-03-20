@@ -65,6 +65,18 @@ class Action():
 """
 Component tasks
 """
+class FreeAction(Action): 
+    def __init__(	self, 
+			model,
+	):
+        Action.__init__(self, 
+			model,
+			[], 
+			[],
+			"Free action",
+			"",
+      model_name='component',
+			)
     
 class CreateIstComponentVersion(Action): 
     def __init__(	self, 
@@ -441,4 +453,3 @@ def init_actions():
           new_task_action.save()
 	initialized = True
 
-		
