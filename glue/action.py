@@ -99,14 +99,9 @@ class CreateParamDbVersion(Action):
 			model,
 			["Component_ist_version", "Component_previous_ist_version"], 
 			[],
-<<<<<<< HEAD
 			"Param Db",
 			"Creates the Param Db version, if it does not exist yet",
-=======
-			"IST version",
-			"Creates the Param db version, if it does not exist yet",
       model_name='component',
->>>>>>> ffe10cfa876faba0cb2e6e2b0ddc0dfb04698cb2
 			)
 
 class UpdateReleaseListVersion(Action): 

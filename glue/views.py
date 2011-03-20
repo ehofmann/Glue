@@ -86,7 +86,6 @@ def create_model(request, modelType):
     init_actions()
     nr = 0;
     for action in Action.objects.filter(model_name=modelType):
-<<<<<<< HEAD
       if action.name != "Free action":
         print "Creating TaskAction for %s %s and action %s" % (modelType, model,action)
         nr += 1;
@@ -94,15 +93,6 @@ def create_model(request, modelType):
         model_action_class = get_class('glue.models.' + modelType.capitalize() + 'Action')
         new_taskaction = model_action_class(**filt)
         new_taskaction.save()
-=======
-      print "Creating TaskAction for %s %s and action %s" % (modelType, model,action)
-      nr += 1;
-      filt = {'action': action, str(modelType) : model, 'nr' : nr}
-      model_action_class = get_class('glue.models.' + modelType.capitalize() + 'Action')
-            
-      new_taskaction = model_action_class(**filt)
-      new_taskaction.save()
->>>>>>> 9a4307108910938b5b250de5314558fd95935964
   print "Setting create_actions as post_save_method"
   post_save_method = create_actions
       
@@ -326,3 +316,5 @@ def delete_task(request):
   #response_dict.update({'success': True})
   return HttpResponseRedirect('/glue/dashboard/') # Redirect after POST
 
+def create_action(request):
+  pass
